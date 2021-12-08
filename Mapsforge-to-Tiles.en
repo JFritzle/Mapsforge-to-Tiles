@@ -1,0 +1,148 @@
+# Script's English localized text strings
+
+# Rules:
+# message label must exactly match message label in script
+# followed by localized text string
+
+# Documentation:
+# https://www.tcl-lang.org/man/tcl/TclCmd/msgcat.htm
+
+# ISO 639-1 code for English language: en
+set iso_639_1 "en"
+
+::msgcat::mcmset $iso_639_1 {	# Begin of translations
+
+i00	"Error reading user settings\nfrom file '%s'"
+i01	"Mandatory user settings missing,\nfile '%s' not found"
+
+l01	"Mapsforge to Tiles"
+
+l11	"Preferred Mapsforge maps language:\n(2 lowercase letters ISO 639-1 code)"
+l11t	"See output console for\nsupported map languages"
+l12	"Mapsforge renderer"
+l13	"Mapsforge maps folder"
+l14	"Mapsforge map(s)"
+l15	"Append Mapsforge world map"
+l16	"Mapsforge themes folder"
+l17	"Mapsforge theme"
+l18	"Theme style"
+
+e01	"%s '%s'\nalready running with process id %d"
+e01q	"Terminate process by 'kill'\nand restart?"
+e02	"Operating system %s not supported"
+e03	"Command '%s' in\nvariable '%s' is not executable"
+e04	"Folder '%s' in\nvariable '%s' does not exist"
+e11	"No Mapsforge map found"
+
+c01	"Select overlays for style"
+c02	"Configure hillshading"
+c02t	"Hillshading must be enabled\nin Mapsforge theme!"
+c03	"Scaling & colors"
+c04	"Configure server"
+
+s01	"Scaling of scalable map elements"
+s02	"All elements"
+s03	"Text labels"
+s04	"Symbols"
+
+s06	"Color post-processing"
+s07	"Gamma correction"
+s08	"Contrast stretching"
+
+x01	"Server information"
+x02	"Version Java runtime"
+x03	"Version Mapsforge tile server"
+x04	"Server's Java archive"
+
+x11	"Server configuration"
+x12	"Rendering engine"
+x13	"Network interface(s)"
+x14	"TCP port"
+x15	"TCP accept queue size"
+x16	"Minimum concurrent threads"
+x17	"Maximum concurrent threads"
+
+b01	"Render"
+b02	"Finish"
+
+l21	"XY range by"
+l22	"Tile numbers"
+l23	"Coordinate values"
+l24	"Zoom level"
+
+v22	"tile numbers"
+v23	"coordinate values"
+
+t21	"tile %s left edge at %s W"
+t22	"tile %s right edge at %s E"
+t23	"tile %s top edge at %s N"
+t24	"tile %s bottom edge at %s S"
+
+l31	"Tiles folder"
+l32	"Choose tiles folder"
+l33	"Filename prefix"
+
+c31	"Write tiles to files"
+c32	"Compose tiles to image file"
+c33	"Keep tile files after composing to image file"
+c34	"Show composed image after completion"
+c34t	"Requires 'ImageMagick' with utility 'convert' to be installed"
+c35	"After each server transaction wait for completion"
+c36	"Use concurrent connections to tile server"
+
+e41	"No Mapsforge map(s) selected"
+e42	"%d tile number(s) not specified"
+e43	"Min tile number(s) > max tile number(s)"
+e44	"Tiles folder '%s' not writable"
+e45	"DEM folder missing or not valid"
+
+m51	"Process %d (%s) started"
+m52	"Process %d (%s) terminated"
+m53	"Process %d (%s) terminated by 'kill'"
+m54	"Starting %s"
+m55	"Unexpected end of Mapsforge Tile Server"
+
+m61	"Render tiles"
+m63	"Tile numbers range"
+m64	"Coordinate values range"
+m65	"longitude"
+m66	"latitude"
+m67	"%s tiles to be rendered in %s direction"
+m68	"total number of tiles"
+m69	"More than %d tiles! Continue anyway?"
+
+m71	"Run render job"
+m72	"Received %d valid tiles, %d void tiles"
+m73	"Total time %s ms for %s tiles"
+m74	"Average time %s ms for 1 tile"
+m75	"for rendering and retrieving"
+m76	"Write tiles as PNG files to folder '%s'"
+m77	"Wrote %d tiles"
+m78	"Compose tiles to image file '%s'"
+m79	"Compose %d tiles (%d,%d) \u2264 tile \u2264 (%d,%d) to horizontal tile strip"
+m80	"Compose %d horizontal tile strips to image"
+m81	"Wrote composed image file"
+m82	"Composing tiles to image file failed"
+m83	"Deleted tiles"
+
+c80	"Enable hillshading"
+
+l81	"DEM folder (digital elevation model)"
+l81t	"hgt files with elevation data"
+l82	"Choose DEM folder"
+l83	"Algorithm"
+l84	"Linearity"
+l85	"Scale"
+l86	"Height angle of light source"
+l87	"Gray value magnitude scaling"
+
+b91	"All"
+b92	"Reset"
+b92t	"Reset to default values"
+
+l99	"Output console"
+c99	"Show output console"
+m99	"Output console can now be closed!"
+
+};	# Do not remove: end of translations
+	# Do not remove: end of file (Ctrl+Z)
