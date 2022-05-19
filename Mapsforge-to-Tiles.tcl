@@ -335,7 +335,8 @@ foreach item {maps_folder themes_folder} {
 
 set java_version 0
 set java_string "unknown"
-set command $java_cmd
+set command {}
+lappend command $java_cmd
 lappend command -version
 if {$::tcl_platform(os) == "Windows NT"} {
   set rc [catch {open "| $command 2>@1" r} fd]
@@ -360,7 +361,8 @@ close $fd
 
 set server_version 0
 set server_string "unknown"
-set command $java_cmd
+set command {}
+lappend command $java_cmd
 lappend command -jar [file normalize $server_jar] -h
 set rc [catch {open "| $command" r} fd]
 if {$rc} {error_message "$fd" exit}
