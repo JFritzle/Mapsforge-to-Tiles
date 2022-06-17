@@ -1,3 +1,9 @@
+2022-06-17
+
+- Check server JAR file by script variable "server_jar" for existence
+- Allow leading sign and/or digits 0 when validating number input
+- Minor README changes
+
 2022-05-19
 
 - Avoid script aborting when java path by ini file variable "java_cmd" contains spaces
