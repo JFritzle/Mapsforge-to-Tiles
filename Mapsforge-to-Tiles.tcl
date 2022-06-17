@@ -326,6 +326,10 @@ foreach item {java_cmd} {
   set value [set $item]
   if {[auto_execok $value] == ""} {error_message [mc e04 $value $item] exit}
 }
+foreach item {server_jar} {
+  set value [set $item]
+  if {![file isfile $value]} {error_message [mc e05 $value $item] exit}
+}
 foreach item {maps_folder themes_folder} {
   set value [set $item]
   if {![file isdirectory $value]} {error_message [mc e05 $value $item] exit}
@@ -745,8 +749,9 @@ proc validate_float_minmax {widget} {
   if {[regexp {^(\d+\.?\d*|\d*\.?\d+)$} $value]} {
     set valid 1
     lassign [set ::$widget.minmax] min max
-    if {$min != "" && [expr $value < $min]} {set valid 0}
-    if {$max != "" && [expr $value > $max]} {set valid 0}
+    set test [regsub {([+-]?)0*([0-9]+.*)} $value {\1\2}]
+    if {$min != "" && [expr $test < $min]} {set valid 0}
+    if {$max != "" && [expr $test > $max]} {set valid 0}
   } else {
     set valid 0
   }
@@ -1011,8 +1016,9 @@ proc validate_number_minmax {widget} {
   if {[regexp {^(\d+)$} $value]} {
     set valid 1
     lassign [set ::$widget.minmax] min max
-    if {$min != "" && [expr $value < $min]} {set valid 0}
-    if {$max != "" && [expr $value > $max]} {set valid 0}
+    set test [regsub {([+-]?)0*([0-9]+.*)} $value {\1\2}]
+    if {$min != "" && [expr $test < $min]} {set valid 0}
+    if {$max != "" && [expr $test > $max]} {set valid 0}
   } else {
     set valid 0
   }
@@ -1106,7 +1112,7 @@ proc setup_styles_overlays_structure {} {
   set ::style.theme $theme
   set theme_file "$::themes_folder/$theme"
   set fd [open $theme_file r]
-  fconfigure $fd -translation binary -encoding utf-8
+  fconfigure $fd -encoding utf-8
   set data [read $fd]
   close $fd
 
@@ -1193,7 +1199,7 @@ proc setup_styles_overlays_structure {} {
     foreach index $indices {
       array unset overlay
       array set overlay \
-	     [get_element_attributes "overlay" [lindex $layer_data $index]]
+	[get_element_attributes "overlay" [lindex $layer_data $index]]
       lappend layer(overlays) $overlay(id)
     }
 

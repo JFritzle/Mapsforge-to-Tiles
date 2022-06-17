@@ -47,7 +47,7 @@ Windows: Copy downloaded jar file(s) into Mapsforge tile server’s installation
 Linux: Copy downloaded jar file(s) into Mapsforge tile server’s installation folder, e.g. into folder _~/MapsforgeSrv_.  
 
 4.	Tcl/Tk scripting language version 8.6 or higher binaries  
-Windows: Download and install latest stable version of Tcl/Tk. See https://wiki.tcl-lang.org/page/Binary+Distributions for available binary distributions. Recommended distribution is [teclab’s tcltk](https://github.com/teclab-at/tcltk/tree/tcl86/releases) repository. First select most recent installation file _tcltk86-8.6.x.y.tcl86.Win10.x86_64.tgz_, then press _Download_ button. Unpack zipped tar archive (file extension _.tgz_) into your Tcl/Tk installation folder, e.g. _%programfiles%/Tcl_.  
+Windows: Download and install latest stable version of Tcl/Tk. See https://wiki.tcl-lang.org/page/Binary+Distributions for available binary distributions. Recommended distribution is [teclab’s tcltk](https://github.com/teclab-at/tcltk/releases) repository. First select most recent installation file _tcltk86-8.6.x.y.tcl86.Win10.x86_64.tgz_, then press _Download_ button. Unpack zipped tar archive (file extension _.tgz_) into your Tcl/Tk installation folder, e.g. _%programfiles%/Tcl_.  
 Linux: Install packages _tcl, tcllib, tk_ and _tklib_ using Linux package manager. Package _tklib_ is required for tooltips. (Ubuntu: _apt install tcl tcllib tk tklib_)
 
 5. ImageMagick (optional, required for tiles composition)  
@@ -55,8 +55,7 @@ Windows: If not yet installed, download and install latest ImageMagick version f
 Linux: If not yet installed, install ImageMagick package using Linux package manager. (Ubuntu: _apt install imagemagick_)
 
 6. Mapsforge maps  
-Download Mapsforge maps for example from [openandromaps.org](https://www.openandromaps.org).  
-Each downloaded OpenAndroMaps map archive contains a map file (file extension _.map_) and possibly points-of-interest files. Tile server will render the former file.  
+Download Mapsforge maps for example from [openandromaps.org](https://www.openandromaps.org). Each downloaded OpenAndroMaps map archive contains a map file (file extension _.map_). Tile server will render this map file.  
 Note:  
 Mapsforge tile server version 0.17.4 or higher is required for optionally appending built-in Mapsforge world map. 
 
@@ -115,7 +114,7 @@ Screenshot showing Heidelberg (Germany) and using
 
 Upper left half of image was rendered with hillshading settings as  above but "Hillshading on map" selected, lower right half of image was rendered with hillshading settings as above with "Hillshading as map" selected.   
  
-![Heidelberg 14 8584 5595-14 8589 5599](https://user-images.githubusercontent.com/62614244/164913502-0a7bcb4b-318a-4789-93fa-f27ca754cad3.jpg)                         
+![Heidelberg](https://user-images.githubusercontent.com/62614244/164913502-0a7bcb4b-318a-4789-93fa-f27ca754cad3.jpg)                         
 
 ### Hints
 
@@ -123,8 +122,9 @@ Upper left half of image was rendered with hillshading settings as  above but "H
 Since the built-in [Mapsforge world map](https://download.mapsforge.org/maps/world/world.map) only shows the coastline, it only serves as a rough overview. Due to map's low resolution, coastlines show inaccurate at high resolution. Because the Mapsforge renderer prefers land on the world map to sea on the selected detailed local map, it may be advisable to disable the built-in world map when rendering coastal regions at high resolution.
 * Area not covered by selected maps consists of "no content" tiles. However whole world is covered, when built-in Mapsforge world map is appended to selected maps.
 * Hillshading
-  * When selecting "Hillshading on map", Mapsforge's algorithm renders map and hillshading in one single step. Flat area gets a medium shade of gray, while slopes get a darker or a brighter shade of gray depending on the angle of incidence of light. Thus map has a shade of gray everywhere.  
-  * When selecting "Hillshading as map", Mapsforge's algorithm renders map and hillshading in two steps. Post-processing in step two, gray value of flat area gets mapped to full transparency, darker gray values get mapped to transparency levels of black, brighter gray values get mapped to transparency levels of white. Hillshading map as alpha-transparent overlay from step two finally gets composed with map from step one. Thus the flatter the area, the more the original colors of the map shine through. [OpenTopoMap](https://opentopomap.org) uses this same hillshading technique.  
+  * When selecting "Hillshading on map", map and hillshading are rendered  into one single map. Flat area gets a medium shade of gray, while slopes get a darker or a brighter shade of gray depending on the angle of incidence of light. Thus map has a shade of gray everywhere.  
+  * When selecting "Hillshading as map", map and hillshading are rendered as two separate maps. Post-processing hillshading, gray value of flat area gets mapped to full transparency, darker gray values get mapped to transparency levels of black, brighter gray values get mapped to transparency levels of white. Thus the flatter the area, the more the original colors of the map shine through. Finally, hillshading as alpha-transparent overlay gets composed with map.  
+[OpenTopoMap](https://opentopomap.org) uses this same hillshading technique.  
 * Tiles range in x and y directions may be given as tile numbers or as coordinate values. Entered coordinate values are converted into tile numbers according to zoom level set, entered tile numbers are converted into coordinate values according to zoom level set. When changing the zoom level, the input values are retained, the converted values however are recalculated. For conversion formulas used see https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames.
 * When switch "Write tiles to files" is off, neither tiles are written nor an image is composed. This is for statistical purposes only. 
 * When switch "After each server transaction wait for completion" is on, next request is not sent to tile server before previous request has been answered and rendered tile has been retrieved from tile server. This slows down the tile server avoiding parallel processing but allows to measure real time needed to render and retrieve one single tile.
