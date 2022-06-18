@@ -1,3 +1,7 @@
+2022-06-18
+
+- Avoid uninitialized server TCP port 
+
 2022-06-17
 
 - Check server JAR file by script variable "server_jar" for existence
