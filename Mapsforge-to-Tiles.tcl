@@ -115,7 +115,7 @@ set shading.diffuselight.angle 50.
 set shading.magnitude 1.
 set dem.folder ""
 
-set tcp_port $tcp_port
+set tcp.port $tcp_port
 set tcp.interface $interface
 set tcp.maxconn 256
 set threads.min 0
