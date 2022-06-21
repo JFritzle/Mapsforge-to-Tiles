@@ -1552,6 +1552,8 @@ proc scale_zoom {zoom} {
     eval tooltip $widget.ymine "\$${item}_ymin"
     eval tooltip $widget.ymaxe "\$${item}_ymax"
   }
+  set count [expr $tmax+1]
+  tooltip .zoom_scale "[mc t25 $tmax $count $count]"
 
   # Shrink tiles range to valid range
   while {1} {
@@ -1755,11 +1757,17 @@ pack .show_composed -in .tiles_compose_onoff -expand 1 -fill x
 
 # Looking for installed ImageMagick tool "convert"
 
-if {$::tcl_platform(os) == "Windows NT"} {
-  set magick_convert [lindex [glob -nocomplain -type f \
+set magick_convert ""
+if {[info exists convert_cmd] && $convert_cmd != ""} {
+  set magick_convert [join [auto_execok $convert_cmd]]
+}
+if {$magick_convert == ""} {
+  if {$::tcl_platform(os) == "Windows NT"} {
+    set magick_convert [lindex [glob -nocomplain -type f \
 	"C:/Program Files*/ImageMagick*/convert.exe"] 0]
-} elseif {$::tcl_platform(os) == "Linux"} {
-  set magick_convert [auto_execok convert]
+  } elseif {$::tcl_platform(os) == "Linux"} {
+    set magick_convert [join [auto_execok convert]]
+  }
 }
 
 if {$magick_convert == ""} {
@@ -2366,7 +2374,7 @@ proc run_render_job {srv} {
 	{*}$col -append $composed$suffix} result]
   }
   if {!$rc} {
-    puts "[mc m81]"
+    puts "[mc m81 $composed$suffix]"
   } else {
     puts "[mc m82]:"
     puts "$result"
@@ -2416,7 +2424,7 @@ proc run_render_job {srv} {
       file rename -force tmp.$map $map
       file delete $ovl tmp.$map
     }
-    puts "[mc m81]"
+    puts "[mc m81 $map]"
     puts ""
     cd ${::cwd}
   }
