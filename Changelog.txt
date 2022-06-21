@@ -1,3 +1,10 @@
+2022-06-21
+
+- Add new ini file variable "convert_cmd" for ImageMagick's "convert" excutable
+- Add tooltip to zoom level slider
+- Append filename to "Wrote composed image file" message
+- Minor README changes
+
 2022-06-18
 
 - Avoid uninitialized server TCP port 
