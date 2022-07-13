@@ -19,10 +19,10 @@ Resource files are named _Mapsforge-to-Tiles.<locale\>_, where _<locale\>_ match
 Rendered tiles may optionally be composed to an image. Composition requires package _ImageMagick_ with package’s command line utility _convert_ to be installed. 
 
 Screenshot of graphical user interface on Microsoft Windows operating system (Windows 11): 
-![GUI_Windows](https://user-images.githubusercontent.com/62614244/164913487-eafd5446-5c2c-428a-a684-31395009ca7f.png)
+![GUI_Windows](https://user-images.githubusercontent.com/62614244/178749371-c37f6b0f-4665-45aa-a629-dccbc6eea658.png)
 
 Screenshot of graphical user interface on Linux operating system (Ubuntu):
-![GUI_Linux](https://user-images.githubusercontent.com/62614244/164913494-095b7b70-1921-46ad-8257-0faccdd68acc.png)
+![GUI_Linux](https://user-images.githubusercontent.com/62614244/178749398-c11a79e8-74d2-49b3-b69a-ffe5d46b7571.png)
 
 ### Installation
 
@@ -37,7 +37,7 @@ For Java version 8 (or higher), switch branch to _Java8_, navigate to folder _ma
 Windows: Copy downloaded jar file into Mapsforge tile server’s installation folder, e.g. into folder _%programfiles%/MapsforgeSrv_.  
 Linux: Copy downloaded jar file into Mapsforge tile server’s installation folder, e.g. into folder _~/MapsforgeSrv_.  
 Note:  
-Currently Mapsforge tile server version 0.17.1 or higher is required. Previous server versions are no longer supported.  
+Currently Mapsforge tile server version 0.17.4 or higher is required. Previous server versions are no longer supported.  
 
 3.	Alternative Marlin rendering engine (optional)  
 [Marlin](https://github.com/bourgesl/marlin-renderer) is an open source Java2D rendering engine optimized for performance.  
@@ -48,16 +48,15 @@ Linux: Copy downloaded jar file(s) into Mapsforge tile server’s installation f
 
 4.	Tcl/Tk scripting language version 8.6 or higher binaries  
 Windows: Download and install latest stable version of Tcl/Tk. See https://wiki.tcl-lang.org/page/Binary+Distributions for available binary distributions. Recommended distribution is [teclab’s tcltk](https://github.com/teclab-at/tcltk/releases) repository. First select most recent installation file _tcltk86-8.6.x.y.tcl86.Win10.x86_64.tgz_, then press _Download_ button. Unpack zipped tar archive (file extension _.tgz_) into your Tcl/Tk installation folder, e.g. _%programfiles%/Tcl_.  
-Linux: Install packages _tcl, tcllib, tk_ and _tklib_ using Linux package manager. Package _tklib_ is required for tooltips. (Ubuntu: _apt install tcl tcllib tk tklib_)
+Linux: Install packages _tcl, tcllib, tk_ and _tklib_ using Linux package manager. (Ubuntu: _apt install tcl tcllib tk tklib_)
 
-5. ImageMagick (optional, required for tiles composition)  
-Windows: If not yet installed, download and install latest ImageMagick version from [download section](https://imagemagick.org/script/download.php). Enable option "Install legacy utilities" during installation. After installation, legacy utility _convert.exe_ is expected to be found in one of folders _C:\Program Files*\ImageMagick*_.  
+5. ImageMagick  
+Windows: If not yet installed, download and install latest ImageMagick version from [download section](https://imagemagick.org/script/download.php). Enable option "Install legacy utilities" during installation.  
+After installation, legacy utility _convert.exe_ is expected to be found in one of folders _C:\Program Files*\ImageMagick*_. An alternative installation path for _convert.exe_ can be specified in the ini file.  
 Linux: If not yet installed, install ImageMagick package using Linux package manager. (Ubuntu: _apt install imagemagick_)
 
 6. Mapsforge maps  
 Download Mapsforge maps for example from [openandromaps.org](https://www.openandromaps.org). Each downloaded OpenAndroMaps map archive contains a map file (file extension _.map_). Tile server will render this map file.  
-Note:  
-Mapsforge tile server version 0.17.4 or higher is required for optionally appending built-in Mapsforge world map. 
 
 7. Mapsforge themes  
 Mapsforge themes _Elevate_ and _Elements_ (file extension _.xml_) suitable for OpenAndroMaps are available for download at [openandromaps.org](https://www.openandromaps.org).  
@@ -114,7 +113,7 @@ Screenshot showing Heidelberg (Germany) and using
 
 Upper left half of image was rendered with hillshading settings as  above but "Hillshading on map" selected, lower right half of image was rendered with hillshading settings as above with "Hillshading as map" selected.   
  
-![Heidelberg](https://user-images.githubusercontent.com/62614244/164913502-0a7bcb4b-318a-4789-93fa-f27ca754cad3.jpg)                         
+![Heidelberg](file://D:/Software/Programme/Landkarten/MapsforgeTileServer/Mapsforge-to-Tiles/Heidelberg.14.8584.5595-14.8589.5599.jpg)                         
 
 ### Hints
 
@@ -125,10 +124,9 @@ Since the built-in [Mapsforge world map](https://download.mapsforge.org/maps/wor
   * When selecting "Hillshading on map", map and hillshading are rendered  into one single map. Flat area gets a medium shade of gray, while slopes get a darker or a brighter shade of gray depending on the angle of incidence of light. Thus map has a shade of gray everywhere.  
   * When selecting "Hillshading as map", map and hillshading are rendered as two separate maps. Post-processing hillshading, gray value of flat area gets mapped to full transparency, darker gray values get mapped to transparency levels of black, brighter gray values get mapped to transparency levels of white. Thus the flatter the area, the more the original colors of the map shine through. Finally, hillshading as alpha-transparent overlay gets composed with map.  
 [OpenTopoMap](https://opentopomap.org) uses this same hillshading technique.  
-* Tiles range in x and y directions may be given as tile numbers or as coordinate values. Entered coordinate values are converted into tile numbers according to zoom level set, entered tile numbers are converted into coordinate values according to zoom level set. When changing the zoom level, the input values are retained, the converted values however are recalculated. For correlation between zoom level and corresponding tiles range and for conversion formulas used see https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames.
-* When switch "Write tiles to files" is off, neither tiles are written nor an image is composed. This is for statistical purposes only. 
-* When switch "After each server transaction wait for completion" is on, next request is not sent to tile server before previous request has been answered and rendered tile has been retrieved from tile server. This slows down the tile server avoiding parallel processing but allows to measure real time needed to render and retrieve one single tile.
-* When switch "Use concurrent connections to tile server" is on and switch "After each server transaction wait for completion" is off, the maximum processing speed is achieved. Requests are sent to server over multiple TCP connections, each one allowing the server to render one or more tiles in different threads according to its available resources.   
+* Tiles range in x and y directions may be given as tile numbers or as coordinate values. Entered coordinate values are converted into tile numbers according to zoom level set, entered tile numbers are converted into coordinate values according to zoom level set. When changing the zoom level, the input values are retained, the converted values however are recalculated. For correlation between zoom level and corresponding tiles range and for conversion formulas used, see https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames.  
+
+
 
                       
 
