@@ -1,6 +1,21 @@
+2022-07-13
+
+- Drop support for tile server versions before version 0.17.4
+- Script variable "transparent" from ini file is no longer used
+- Removed restriction to fully qualified (absolute) pathnames in ini file,
+  pathnames relative to the script installation folder are now acceptable
+- ImageMagick's "convert" executable is now required and no longer optional
+- Removed checkbutton "Write tiles to files"
+- Removed checkbutton "After each server transaction wait for completion"
+- Removed checkbutton "Use concurrent connections to tile server"
+- Show progress of downloaded tiles in 1 line, updated for each tile
+- Show progress of generating tile strips in 1 line, updated for each tile strip
+- Script optimizations
+- Minor README changes
+
 2022-06-21
 
-- Add new ini file variable "convert_cmd" for ImageMagick's "convert" excutable
+- Add new ini file variable "convert_cmd" for ImageMagick's "convert" executable
 - Add tooltip to zoom level slider
 - Append filename to "Wrote composed image file" message
 - Minor README changes
