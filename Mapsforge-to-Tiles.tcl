@@ -352,6 +352,7 @@ if {$tcl_platform(os) == "Windows NT"} {
     if {$env(LANG) == "C"} {set language "en"}
   }
   set tmpdirvar ::env(TMPDIR)
+  if {![info exists $tmpdirvar]} {set $tmpdirvar /tmp}
 } else {
   error_message [mc e03 $tcl_platform(os)] exit
 }
