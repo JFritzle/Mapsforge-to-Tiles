@@ -18,11 +18,8 @@ Resource files are named _Mapsforge-to-Tiles.<locale\>_, where _<locale\>_ match
 
 Rendered tiles may optionally be composed to an image. Composition requires package _ImageMagick_ with package’s command line utility _convert_ to be installed. 
 
-Screenshot of graphical user interface on Microsoft Windows operating system (Windows 11): 
+Screenshot of graphical user interface:
 ![GUI_Windows](https://user-images.githubusercontent.com/62614244/178749371-c37f6b0f-4665-45aa-a629-dccbc6eea658.png)
-
-Screenshot of graphical user interface on Linux operating system (Ubuntu):
-![GUI_Linux](https://user-images.githubusercontent.com/62614244/178749398-c11a79e8-74d2-49b3-b69a-ffe5d46b7571.png)
 
 ### Installation
 
@@ -113,7 +110,7 @@ Screenshot showing Heidelberg (Germany) and using
 
 Upper left half of image was rendered with hillshading settings as  above but "Hillshading on map" selected, lower right half of image was rendered with hillshading settings as above with "Hillshading as map" selected.   
  
-![Heidelberg](file://D:/Software/Programme/Landkarten/MapsforgeTileServer/Mapsforge-to-Tiles/Heidelberg.14.8584.5595-14.8589.5599.jpg)                         
+![Heidelberg](https://user-images.githubusercontent.com/62614244/164913502-0a7bcb4b-318a-4789-93fa-f27ca754cad3.jpg)                                                  
 
 ### Hints
 
