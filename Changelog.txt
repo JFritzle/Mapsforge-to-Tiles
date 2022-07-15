@@ -1,3 +1,7 @@
+2022-07-15
+
+- Repair README link to screenshot
+
 2022-07-13
 
 - Drop support for tile server versions before version 0.17.4
