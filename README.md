@@ -12,7 +12,7 @@ This project’s intension is to easily let the user interactively and comfortab
 
 Graphical user interface is a single script written in _Tcl/Tk_ scripting language and is executable on _Microsoft Windows_ and _Linux_ operating system. Language-neutral script file _Mapsforge-to-Tiles.tcl_ requires an additional user settings file and at least one localized resource file. Additional files must follow _Tcl/Tk_ syntax rules too.
 
-User settings file is named _Mapsforge-to-Tiles.tcl.ini_. A template file is provided.
+User settings file is named _Mapsforge-to-Tiles.ini_. A template file is provided.
 
 Resource files are named _Mapsforge-to-Tiles.<locale\>_, where _<locale\>_ matches locale’s 2 lowercase letters ISO 639-1 code. English localized resource file _Mapsforge-to-Tiles.en_ and German localized resource file _Mapsforge-to-Tiles.de_ are provided. Script can be easily localized to any other system’s locale by providing a corresponding resource file using English resource file as a template. 
 
