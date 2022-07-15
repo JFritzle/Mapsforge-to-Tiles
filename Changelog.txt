@@ -1,5 +1,6 @@
 2022-07-15
 
+- Correct wrong name of user settings file in README
 - Repair README link to screenshot
 
 2022-07-13
