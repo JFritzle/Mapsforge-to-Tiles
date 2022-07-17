@@ -1,3 +1,8 @@
+2022-07-17
+
+- Hillshading was not applied to composed image,
+  when checkbutton "Show composed image after completion" was off
+
 2022-07-15
 
 - Correct wrong name of user settings file in README
