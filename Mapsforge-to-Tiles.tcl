@@ -1965,7 +1965,6 @@ proc process_start {command process} {
   namespace upvar $process fd fd pid pid exe exe
   set ${process}::command $command
 
-
   set fd $result
   fconfigure $fd -blocking 0 -buffering line
 
@@ -2418,9 +2417,7 @@ proc run_render_job {srv} {
   puts ""
   update
   cd ${::cwd}
-
   if {$rc} {return 1}
-  if {!${::composed.show}} {return 0}
 
   # Compose map image with alpha transparent hillshading overlay
 
@@ -2458,6 +2455,7 @@ proc run_render_job {srv} {
     puts ""
     cd ${::cwd}
   }
+  if {!${::composed.show}} {return 0}
 
   # Show composed image by background job
 
