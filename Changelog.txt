@@ -2,6 +2,8 @@
 
 - Hillshading was not applied to composed image,
   when checkbutton "Show composed image after completion" was off
+- README: Location of "marlin-*.jar" files for mapsforgesrv's branch "Java8" was incorrect
+- README: Note how to unpack .tgz archives
 
 2022-07-15
 
