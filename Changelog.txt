@@ -1,3 +1,7 @@
+2022-10-24
+
+- Show operating system message, if TCP port is not available
+
 2022-07-17
 
 - Hillshading was not applied to composed image,
