@@ -99,7 +99,7 @@ m52	"Process %d (%s) terminated"
 m53	"Process %d (%s) terminated by 'kill'"
 m54	"Starting %s"
 m55	"Unexpected end of %s"
-m59	"%s not started.\nTCP port '%s' already in use"
+m59	"%s not started.\nTCP port '%s' not available:\n%s"
 
 m61	"Render tiles"
 m63	"Tile numbers range"

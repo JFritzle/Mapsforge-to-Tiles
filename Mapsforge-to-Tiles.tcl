@@ -2036,13 +2036,13 @@ proc srv_start {srv} {
   # Server's TCP port already or still (after kill) in use?
   set count 0
   while {$count < 5} {
-    set rc [catch {socket -server {} -myaddr 127.0.0.1 ${port}} fd]
+    set rc [catch {socket -server {} -myaddr 127.0.0.1 $port} fd]
     if {!$rc} {break}
     incr count
     after 200
   }
   if {$rc} {
-    error_message [mc m59 $name ${port}] return
+    error_message [mc m59 $name $port $fd] return
     return
   }
   close $fd

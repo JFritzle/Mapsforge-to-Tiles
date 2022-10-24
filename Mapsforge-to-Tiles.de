@@ -99,7 +99,7 @@ m52	"Prozess %d (%s) beendet"
 m53	"Prozess %d (%s) durch 'kill' beendet"
 m54	"Starte %s"
 m55	"Unerwartetes Ende von %s"
-m59	"%s nicht gestartet.\nTCP-Port '%s' bereits in Benutzung"
+m59	"%s nicht gestartet.\nTCP-Port '%s' nicht verfügbar:\n%s"
 
 m61	"Kacheln rendern"
 m63	"Kachelnummern-Bereich"
