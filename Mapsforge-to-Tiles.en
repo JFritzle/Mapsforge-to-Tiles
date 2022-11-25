@@ -133,7 +133,7 @@ c81t	"Hillshading must be enabled\nin Mapsforge theme"
 c82	"Hillshading as map"
 
 l81	"DEM folder (digital elevation model)"
-l81t	"hgt files with elevation data"
+l81t	"HGT files with elevation data and/or\nZIP archives containing equally named HGT file\nExample: archive N49E008.zip containing file N49E008.hgt"
 l82	"Choose DEM folder"
 l83	"Algorithm"
 l84	"Linearity"

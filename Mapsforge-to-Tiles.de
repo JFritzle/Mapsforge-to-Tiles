@@ -133,7 +133,7 @@ c81t	"Schummerung muss im\nMapsforge-Thema aktiviert sein"
 c82	"Schummerung als Karte"
 
 l81	"DEM-Ordner (Digital Elevation Model)"
-l81t	"hgt-Dateien mit Höhendaten"
+l81t	"HGT-Dateien mit Höhendaten und/oder\nZIP-Archive mit Inhalt gleichnamige HGT-Datei\nBeispiel:\nArchiv N49E008.zip mit Inhalt Datei N49E008.hgt"
 l82	"DEM-Ordner auswählen"
 l83	"Algorithmus"
 l84	"Linearität"
