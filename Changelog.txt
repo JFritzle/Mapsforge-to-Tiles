@@ -1,3 +1,10 @@
+2022-11-25
+
+- Add hint about using ZIP archives with elevation data
+  to tooltip for DEM folder and to README
+- Add reference to DEM data by Sonny to README
+- Minor script optimizations
+
 2022-10-24
 
 - Show operating system message, if TCP port is not available
