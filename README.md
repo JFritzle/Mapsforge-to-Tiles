@@ -19,7 +19,7 @@ Resource files are named _Mapsforge-to-Tiles.<locale\>_, where _<locale\>_ match
 Rendered tiles may optionally be composed to an image. Composition requires package _ImageMagick_ with package’s command line utility _convert_ to be installed. 
 
 Screenshot of graphical user interface:
-![GUI_Windows](https://user-images.githubusercontent.com/62614244/178749371-c37f6b0f-4665-45aa-a629-dccbc6eea658.png)
+![GUI_Windows](https://user-images.githubusercontent.com/62614244/205695795-3295c8cf-d93e-44e5-9410-f4569852e46d.png)
 
 ### Installation
 
@@ -49,20 +49,26 @@ Note 1: [7-Zip](https://www.7-zip.org) file archiver/extractor is able to unpack
 Note 2: Archives of latest releases for Windows at teclab’s tcltk repository may have file extension _.zip_ while they should have extension _.tgz_. Rename extension to _.tgz_ before unpacking archive.  
 Linux: Install packages _tcl, tcllib, tk_ and _tklib_ using Linux package manager. (Ubuntu: _apt install tcl tcllib tk tklib_)
 
-5. ImageMagick  
-Windows: If not yet installed, download and install latest ImageMagick version from [download section](https://imagemagick.org/script/download.php). Enable option "Install legacy utilities" during installation.  
-After installation, legacy utility _convert.exe_ is expected to be found in one of folders _C:\Program Files*\ImageMagick*_. An alternative installation path for _convert.exe_ can be specified in the ini file.  
-Linux: If not yet installed, install ImageMagick package using Linux package manager. (Ubuntu: _apt install imagemagick_)
+5. GraphicsMagick  
+Windows: If not yet installed, download and install latest GraphicsMagick version from [download section](https://sourceforge.net/projects/graphicsmagick/files/graphicsmagick-binaries).  
+After installation, utility _gm.exe_ is expected to be found in one of folders _C:\Program Files*\GraphicsMagick*_. An alternative installation path for _gm.exe_ can be specified in the ini file.  
+Linux: If not yet installed, install GraphicsMagick package using Linux package manager. (Ubuntu: _apt install graphicsmagick_)  
+Note: Resource limits of GraphicsMagick are hardcoded in tcl script file but can be adjusted if needed in the script file section _Set resource limits of GraphicsMagick_.
 
-6. Mapsforge maps  
+6. curl (optional)  
+Windows: Starting with version 10, a suitable _curl_ is part of Windows and is to be found as _C:\Windows\System32\curl.exe_. If however desired, latest curl version is available at curl's [download section](https://curl.se/download.html). An alternative installation path for _curl.exe_ can be specified in the ini file.  
+Linux: If not yet installed, install curl package using Linux package manager. (Ubuntu: _apt install curl_)  
+Note: In particular when downloading many tiles, curl may download significantly faster than downloading by the Tcl built-in http package.
+
+7. Mapsforge maps  
 Download Mapsforge maps for example from [openandromaps.org](https://www.openandromaps.org). Each downloaded OpenAndroMaps map archive contains a map file (file extension _.map_). Tile server will render this map file.  
 
-7. Mapsforge themes  
+8. Mapsforge themes  
 Mapsforge themes _Elevate_ and _Elements_ (file extension _.xml_) suitable for OpenAndroMaps are available for download at [openandromaps.org](https://www.openandromaps.org).  
 Note:  
 In order "Hillshading on map" to be applied to rendered map tiles, hillshading has to be enabled in theme file too. _Elevate_ and _Elements_ themes version 5 or higher do enable hillshading.
 
-8. DEM data (optional, required for hillshading)  
+9. DEM data (optional, required for hillshading)  
 Download and store DEM (Digital Elevation Model) data for the regions to be rendered.
 Notes:  
 Either HGT files or ZIP archives containing 1 equally named HGT file may be supplied.  
@@ -73,7 +79,7 @@ While 1\" (arc second) resolution DEM data have a significantly higher accuracy 
 \- HGT files with 1\" resolution DEM data are available for selected regions at [viewfinderpanoramas.org](http://www.viewfinderpanoramas.org/Coverage%20map%20viewfinderpanoramas_org1.htm). Unzip downloaded ZIP files to DEM folder.  
 \- ZIP archives with 3\" and 1\" resolution compiled and resampled by Sonny are available for selected regions at [Sonny's Digital LiDAR Terrain Models of European Countries](https://sonny.4lima.de). LiDAR data where available are more precise than SRTM data. Store downloaded ZIP files to DEM folder.
 
-9. Mapsforge-to-Tiles graphical user interface  
+10. Mapsforge-to-Tiles graphical user interface  
 Download language-neutral script file _Mapsforge-to-Tiles.tcl_, user settings file _Mapsforge-to-Tiles.ini_  and at least one localized resource file.  
 Windows: Copy downloaded files into Mapsforge tile server’s installation folder, e.g. into folder _%programfiles%/MapsforgeSrv_.  
 Linux: Copy downloaded files into Mapsforge tile server’s installation folder, e.g. into folder _~/MapsforgeSrv_.  
