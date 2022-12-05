@@ -94,7 +94,7 @@ if {[file exist $file]} {
 # but preserve commands if resolved by search path
 
 # - commands
-set cmds {java_cmd convert_cmd}
+set cmds {java_cmd curl_cmd gm_cmd}
 # - commands + folders + files
 set list [concat $cmds ini_folder maps_folder themes_folder server_jar]
 
@@ -148,6 +148,7 @@ set tcp.maxconn 256
 set threads.min 0
 set threads.max 8
 
+set use.curl 0
 set tiles.folder $cwd
 set tiles.abort 0
 # For compatibility only:
@@ -194,6 +195,7 @@ bind Checkbutton <Return> {%W invoke}
 foreach {name value} {
 *Button.borderWidth 2
 *Button.highlightThickness 1
+*Button.padX 0
 *Button.padY 0
 *Button.takeFocus 1
 *Checkbutton.anchor w
@@ -418,45 +420,65 @@ catch "close $fd"
 if {$server_version < 1704 } \
 	{error_message [mc e07 $server_string 0.17.4] exit}
 
-# Looking for installed ImageMagick's tool "convert"
+# Looking for installed URL tool "curl"
 
-set convert ""
-if {[info exists convert_cmd] && $convert_cmd != ""} {
-  set convert $convert_cmd
+set curl ""
+if {[info exists curl_cmd] && $curl_cmd != ""} {
+  set curl [join [auto_execok $curl_cmd]]
 }
-if {$convert == ""} {
+if {$curl == ""} {
   if {$::tcl_platform(os) == "Windows NT"} {
-    set convert [lindex [glob -nocomplain -type f \
-	"[file normalize $env(ProgramFiles)]*/ImageMagick*/convert.exe"] 0]
+    set curl "[file normalize $env(SystemRoot)]/System32/curl.exe"
   } elseif {$::tcl_platform(os) == "Linux"} {
-    set convert [join [auto_execok convert]]
+    set curl [join [auto_execok curl]]
   }
 }
-if {$convert == ""} {error_message [mc e09] exit}
+if {$curl != ""} {
+  catch "exec {$curl} -V" data
+  set string [lindex [split $data] 1]
+  set curl_version [split $string .]
+  set curl_version [expr 1000*[lindex $curl_version 0]+[lindex $curl_version 1]]
+}
 
-# Relax some limits of ImageMagick's policy.xml file
-set fd [open "$ini_folder/policy.xml" w]
-puts $fd {?xml version="1.0" encoding="UTF-8"?>}
-puts $fd {<!DOCTYPE policymap [}
-puts $fd {  <!ELEMENT policymap (policy)*>}
-puts $fd {  <!ATTLIST policymap xmlns CDATA #FIXED ''>}
-puts $fd {  <!ELEMENT policy EMPTY>}
-puts $fd {  <!ATTLIST policy xmlns CDATA #FIXED '' domain NMTOKEN #REQUIRED}
-puts $fd {    name NMTOKEN #IMPLIED pattern CDATA #IMPLIED}
-puts $fd {    rights NMTOKEN #IMPLIED}
-puts $fd {    stealth NMTOKEN #IMPLIED value CDATA #IMPLIED>}
-puts $fd {]>}
-puts $fd {<policymap>}
-puts $fd {  <policy domain="resource" name="memory" value="2GiB"/>}
-puts $fd {  <policy domain="resource" name="map" value="4GiB"/>}
-puts $fd {  <policy domain="resource" name="width" value="10MP"/>}
-puts $fd {  <policy domain="resource" name="height" value="10MP"/>}
-puts $fd {  <policy domain="resource" name="area" value="1GB"/>}
-puts $fd {  <policy domain="resource" name="disk" value=""/>}
-puts $fd {  <policy domain="resource" name="file" value="8192"/>}
-puts $fd {</policymap>}
-close $fd
-set env(MAGICK_CONFIGURE_PATH) $ini_folder
+# Looking for installed GraphicsMagick's tool "gm"
+
+set gm ""
+if {[info exists gm_cmd] && $gm_cmd != ""} {
+  set gm [join [auto_execok $gm_cmd]]
+}
+if {$gm == ""} {
+  if {$::tcl_platform(os) == "Windows NT"} {
+    foreach var {"ProgramFiles" "ProgramFiles(x86)"} {
+      if {![info exists env($var)]} {continue}
+      set val $env($var)
+      set gm [lindex [glob -nocomplain -type f \
+	"[file normalize $val]/GraphicsMagick*/gm.exe"] end]
+      if {$gm != ""} {break}
+    }
+  } elseif {$::tcl_platform(os) == "Linux"} {
+    set gm [join [auto_execok gm]]
+  }
+}
+if {$gm == ""} {error_message [mc e09] exit}
+
+# Set resource limits of GraphicsMagick
+# Resource value "-1" is equivalent to "unlimited"
+# See http://www.graphicsmagick.org/GraphicsMagick.html for more information
+
+# Maximum amount of disk space allowed for use by the pixel cache
+set env(MAGICK_LIMIT_DISK)	"-1"
+# Maximum number of open files
+set env(MAGICK_LIMIT_FILES)	"16384"
+# Maximum size of a memory mapped file allocation
+set env(MAGICK_LIMIT_MAP)	"4GiB"
+# Maximum amount of memory to allocate from the heap
+set env(MAGICK_LIMIT_MEMORY)	"2GiB"
+# Maximum number of total pixels (rows x colums) to allow for any image
+set env(MAGICK_LIMIT_PIXELS)	"1GiB"
+# Maximum pixel width of an image read, or created
+set env(MAGICK_LIMIT_WIDTH)	"10MiP"
+# Maximum pixel height of an image read, or created
+set env(MAGICK_LIMIT_HEIGHT)	"10MiP"
 
 # Recursively find files procedure
 
@@ -846,8 +868,7 @@ foreach widget {.shading.simple_value1 .shading.simple_value2 \
 
 # Save hillshading settings to folder ini_folder
 
-proc save_shading_settings {} {
-uplevel #0 {
+proc save_shading_settings {} {uplevel #0 {
   set fd [open "$ini_folder/hillshading.ini" w]
   fconfigure $fd -buffering full
   foreach name {shading.onoff shading.algorithm \
@@ -1359,13 +1380,15 @@ proc setup_styles_overlays_structure {} {
     frame $parent.frame
     pack $parent.frame -expand 1
     button $parent.frame.all -text [mc b91] -width 8 -takefocus 0 \
-	   -highlightthickness 0 -command "all_style_overlays $parent"
+	-highlightthickness 0 -command "select_style_overlays $parent all"
     tooltip $parent.frame.all [mc b91t]
     button $parent.frame.reset -text [mc b92] -width 8 -takefocus 0 \
-	   -highlightthickness 0 -command "reset_style_overlays $parent"
+	-highlightthickness 0 -command "select_style_overlays $parent default"
     tooltip $parent.frame.reset [mc b92t]
-    pack $parent.frame.all -side left
-    pack $parent.frame.reset -side right
+    button $parent.frame.none -text [mc b93] -width 8 -takefocus 0 \
+	-highlightthickness 0 -command "select_style_overlays $parent none"
+    tooltip $parent.frame.none [mc b93t]
+    pack $parent.frame.all $parent.frame.reset $parent.frame.none -side left
   }
 
   # Fill style selection, select default style
@@ -1397,26 +1420,17 @@ proc update_style_overlay {child} {
   lset ::style.table $style_index $style
 }
 
-# Select all style's overlays from theme file
+# Select style's overlays from theme file:
+# - select all overlays
+# - deselect all overlays
+# - select default overlays only
 
-proc all_style_overlays {parent} {
-  regexp {^\.overlays\.(.*?)$} $parent "" style_id
-  set style_index [lsearch -exact -index 0 ${::style.table} $style_id]
-  set style [lindex ${::style.table} $style_index]
-  set overlays [lindex $style 2]
-  foreach overlay $overlays {
-    set enabled [lindex $overlay 2]
-    if {$enabled != "true"} {
-      set overlay_id [lindex $overlay 0]
-      set child $parent.$overlay_id
-      $child invoke
-    }
+proc select_style_overlays {parent select} {
+  switch $select {
+    all		{set check {$enabled != "true"}}
+    none	{set check {$enabled == "true"}}
+    default	{set check {$enabled != $default}}
   }
-}
-
-# Reset style's lookup table entry to default overlays from theme file
-
-proc reset_style_overlays {parent} {
   regexp {^\.overlays\.(.*?)$} $parent "" style_id
   set style_index [lsearch -exact -index 0 ${::style.table} $style_id]
   set style [lindex ${::style.table} $style_index]
@@ -1424,7 +1438,7 @@ proc reset_style_overlays {parent} {
   foreach overlay $overlays {
     set enabled [lindex $overlay 2]
     set default [lindex $overlay 3]
-    if {$enabled != $default} {
+    if {[expr $check]} {
       set overlay_id [lindex $overlay 0]
       set child $parent.$overlay_id
       $child invoke
@@ -1480,8 +1494,7 @@ event generate .themes_values <<ComboboxSelected>>
 
 # Save global settings to folder ini_folder
 
-proc save_global_settings {} {
-uplevel #0 {
+proc save_global_settings {} {uplevel #0 {
   set maps.selection [lmap index [.maps_values curselection] \
 	{.maps_values get $index}]
   scan [wm geometry .] "%dx%d+%d+%d" width height x y
@@ -1503,8 +1516,7 @@ uplevel #0 {
 
 # Save application dependent settings to folder ini_folder
 
-proc save_tiles_settings {} {
-uplevel #0 {
+proc save_tiles_settings {} {uplevel #0 {
   set fd [open "$ini_folder/tiles.ini" w]
   fconfigure $fd -buffering full
   set xyrange.mode [.xyrange_values current]
@@ -1513,7 +1525,7 @@ uplevel #0 {
 	  coord.xmin coord.xmax coord.ymin coord.ymax \
 	  tiles.write tiles.abort tiles.compose tiles.keep composed.show \
 	  tcp.interface tcp.port shading.layer \
-	  http.wait http.keep} {
+	  use.curl http.wait http.keep} {
     puts $fd "$name=[set $name]"
   }
   close $fd
@@ -1774,11 +1786,20 @@ pack .tiles_prefix_value -in .tiles_prefix -side right
   return [regexp {^(\w+[-.]?)*$} %P]
 }
 
+# Use "curl" for download
+
+checkbutton .use_curl -text [mc c30] -variable use.curl
+pack .use_curl -in .r -expand 1 -fill x
+if {$curl == ""} {
+  set use.curl 0
+  .use_curl configure -state disabled
+  tooltip .use_curl [mc c30t]
+}
+
 # Compose tiles
 
 checkbutton .tiles_compose -text [mc c32] \
 	-variable tiles.compose -command tiles_compose_onoff
-tooltip .tiles_compose [mc c32t]
 pack .tiles_compose -in .r -expand 1 -fill x
 
 # Container for "Compose tiles" dependent widgets
@@ -1812,8 +1833,20 @@ button .buttons.cancel -text [mc b02] -width 12 -command {set action 0}
 pack .buttons -in .r -ipady 5
 pack .buttons.continue .buttons.cancel -side left
 
-bind .buttons.continue <ButtonPress-1> {tk busy .buttons; %W invoke}
+bind .buttons.continue <ButtonPress-1> {busy_state 1}
 focus .buttons.continue
+
+proc busy_state {state} {
+  if {$state} {
+    tk busy hold .buttons
+    .buttons.continue invoke
+    .buttons.continue configure -state disabled -relief sunken
+  } else {
+    .buttons.continue configure -state normal -relief raised
+    tk busy forget .buttons
+  }
+  update idletasks
+}
 
 # Show/hide output console window (show with saved geometry)
 
@@ -1851,7 +1884,7 @@ if {$console != -1} {
 
 proc filler_width_right {} {
   set width 0
-  foreach item {.tiles_compose .tiles_keep .show_composed} {
+  foreach item {.use_curl .tiles_compose .tiles_keep .show_composed} {
     set width [expr max($width,[winfo reqwidth $item])]
   }
   return $width
@@ -1932,20 +1965,6 @@ proc selection_ok {} {
   return 1
 }
 
-# Wait for complete selection or finish
-
-while {1} {
-  vwait action
-  if {$action == 0} {
-    if {[winfo manager .styles] != ""} {save_theme_settings}
-    foreach item {global shading tiles} {save_${item}_settings}
-    exit
-  }
-  unset action
-  if {[selection_ok]} {break}
-  tk busy forget .buttons
-}
-
 # Process start procedure
 
 proc process_start {command process} {
@@ -1957,7 +1976,6 @@ proc process_start {command process} {
   }
   if {$rc} {
     error_message "$result" return
-    after 0 {set action 0}
     return
   }
 
@@ -1978,7 +1996,6 @@ proc process_start {command process} {
 	if {\[eof $fd\]} {
 	  close $fd;
 	  namespace delete $process;
-	  set ::action 0;
 	  puti \"[mc m52 $pid $exe]\";
 	} else {
 	  while {\[gets $fd line\] >= 0} {puts \"$mark \$line\"};
@@ -2166,23 +2183,159 @@ proc srv_start {srv} {
 
 # Run render job
 
-proc geturl_handler {socket token} {
+proc geturl_handler {file socket token} {
   upvar #0 $token state
   set size 0
   if {[string first "image/" [set state(type)]] == 0} {
-    set fd [file tempfile tempfile [pid].tile..TMP]
+    set fd [open $file w+]
     fconfigure $fd -translation binary -buffering none
     while {![eof $socket]} {incr size [chan copy $socket $fd]}
     close $fd
-    set state(file) $tempfile
   } else {
     while {![eof $socket]} {incr size [string length [read -nonewline $socket]]}
-    set state(file) ""
   }
   return $size
 }
 
-proc run_render_job {srv} {
+# Download tiles with "curl"
+
+proc download_with_curl {} {uplevel 1 {
+
+  set url $url_pattern
+  regsub "\\$?{x}" $url "\[$xmin-$xmax\]" url
+  regsub "\\$?{y}" $url "\[$ymin-$ymax\]" url
+  regsub "\\$?{z}" $url "$zoom" url
+
+  # Download tiles from server
+
+  set curl_args {}
+  lappend curl_args -qsvk --http1.1
+  lappend curl_args --retry 0
+  lappend curl_args --fail-early
+  if {$::curl_version >= 7066} \
+	{lappend curl_args --parallel --parallel-max 4}
+  lappend curl_args -o ${prefix}$zoom.#1.#2.$suffix
+
+  set cmd [list $::curl {*}$curl_args $url]
+
+  set start [clock milliseconds]
+  set count 0
+  set valid 0
+
+  if {$::tcl_platform(os) == "Windows NT"} {
+    set rc [catch {open "| $cmd 2>@1" r} result]
+  } elseif {$::tcl_platform(os) == "Linux"} {
+    set rc [catch {open "| $cmd 2>@ stdout" r} result]
+  }
+
+  if {$rc} {
+    set stop [clock milliseconds]
+    error_message "Download $url:\n$result" return
+    puts $fdlog [format $logfmt "URL" $url]
+    puts $fdlog [format $logfmt "curl error" $result]
+    puts $fdlog $logsep
+    return 1
+  }
+
+  set fd $result
+  fconfigure $fd -blocking 0 -buffering line -translation binary
+
+  fileevent $fd readable "
+	if {\[eof $fd\]} {
+	  set ::curl_rc \[catch {close $fd} ::curl_result];
+	} else {
+	  while {\[gets $fd line\] >= 0} {
+	    set line \[string trimright \$line \\r\];
+	    puts $fdlog \$line;
+	  };
+	}"
+
+  vwait ::curl_rc
+  set stop [clock milliseconds]
+  lassign [list $::curl_rc $::curl_result] rc result
+  unset ::curl_rc ::curl_result
+  if {$rc} {return 1}
+
+  # Count successfully downloded files
+
+  set ytile $ymin
+  while {$ytile <= $ymax} {
+    set xtile $xmin
+    while {$xtile <= $xmax} {
+      incr count
+      set tile ${prefix}$zoom.$xtile.$ytile.$suffix
+      if {[file exists $tile]} {incr valid}
+      incr xtile
+    }
+    incr ytile
+  }
+  return 0
+
+}}
+
+# Download tiles with "http"
+
+proc download_with_http {} {uplevel 1 {
+
+  set start [clock milliseconds]
+  set count 0
+  set valid 0
+  set error 0
+  set ytile $ymin
+  while {$ytile <= $ymax} {
+    if {$error} {break}
+    set xtile $xmin
+    while {$xtile <= $xmax} {
+      if {$error} {break}
+      set url $url_pattern
+      regsub "\\$?{x}" $url $xtile url
+      regsub "\\$?{y}" $url $ytile url
+      regsub "\\$?{z}" $url $zoom url
+      set file $prefix$zoom.$xtile.$ytile.$suffix
+      set rc [catch "::http::geturl $url -keepalive 1 \
+	-binary 1 -handler {geturl_handler $file}" result]
+      if {$rc} {
+	set stop [clock milliseconds]
+	error_message "Download $url:\n$result" return
+	puts $fdlog [format $logfmt "URL" $url]
+	puts $fdlog [format $logfmt "HTTP error" $result]
+	puts $fdlog $logsep
+	return 1
+      }
+      set token $result
+      incr count
+
+      puts $fdlog [format $logfmt "URL" $url]
+      puts $fdlog [format $logfmt "HTTP transaction" [::http::status $token]]
+      puts $fdlog [format $logfmt "HTTP error" [::http::error $token]]
+      puts $fdlog [format $logfmt "HTTP status" [::http::code $token]]
+      array set meta [set ${token}(meta)]
+      foreach item [lsort [array names meta]] {
+	puts $fdlog [format $logfmt $item $meta($item)]
+      }
+      unset meta
+      puts $fdlog $logsep
+      flush $fdlog
+
+      set code [::http::ncode $token]
+      set size [::http::size $token]
+      ::http::cleanup $token
+      unset token
+      if {($code == 200 || $code == 404) && $size > 0} {
+	incr valid
+      } else {
+	incr error
+      }
+      incr xtile
+    }
+    incr ytile
+  }
+  set stop [clock milliseconds]
+  return 0
+
+}}
+
+proc run_render_job {} {
 
   foreach item {xmin xmax ymin ymax} {
     upvar ::tiles.$item $item
@@ -2212,10 +2365,23 @@ proc run_render_job {srv} {
   # Confirm if more than threshold tiles
 
   set threshold 100
-  if {$total > $threshold && $srv == "srv"} {
+  if {$total > $threshold} {
     if {[messagebox -parent . -title $::title -icon question -type yesno \
-	-default no -message "$text\n[mc m69 $threshold]"] != "yes"} {return 1}
+	-default no -message "$text\n[mc m69 $threshold]"] != "yes"} {return}
   }
+
+  # Working in tiles folder
+
+  catch {cd ${::tiles.folder}}
+  set folder [pwd]
+  puts "[mc m71 $folder]\n"
+  update
+
+  set prefix ${::tiles.prefix}
+  if {$prefix != "" && ![regexp {[-.]+$} $prefix]} {append prefix "."}
+  set tmppfx [pid].tile
+
+  set composed $prefix$zoom.$xmin.$ymin-$zoom.$xmax.$ymax
 
   # Url
 
@@ -2223,283 +2389,302 @@ proc run_render_job {srv} {
   if {$::tile_size != 256} \
     {append url_pattern "?tileRenderSize=${::tile_size}"}
 
-  puts "[mc m70 $url_pattern] ...\n"
-  update
+  # Open log file
 
-  # Working in tiles folder
+  set logfile $composed.log
+  set logsep [string repeat - 100]
+  set logfmt "%-17s : %s"
+  set fdlog [open $logfile w]
+  fconfigure $fdlog -buffering line
 
-  catch {cd ${::tiles.folder}}
-  set folder [pwd]
-  set $::tmpdirvar $folder
+  set abort 0
+  foreach srv {"srv" "ovl"} {
 
-  set prefix ${::tiles.prefix}
-  if {$prefix != "" && ![regexp {[-.]+$} $prefix]} {append prefix "."}
+    if {$srv == "ovl" && !${::shading.onoff}} {continue}
+    if {$srv == "ovl" && ${::shading.layer} == "onmap"} {continue}
 
-  if {$srv == "srv"} {set suffix "png"}
-  if {$srv == "ovl"} {set suffix "ovl.png"}
+    if {$srv == "srv"} {set suffix "png"}
+    if {$srv == "ovl"} {set suffix "ovl"}
 
-  set composed $prefix$zoom.$xmin.$ymin-$zoom.$xmax.$ymax
+    puts "[mc m70 $url_pattern] ...\n"
 
-  # First remove existing tiles
+    puts $fdlog $logsep
+    puts $fdlog "Download tiles from URL '$url_pattern' ..."
+    puts $fdlog $logsep
 
-  set clean {}
-  set ytile ${::tiles.ymin}
-  while {$ytile <= $ymax} {
-    set xtile $xmin
-    while {$xtile <= $xmax} {
-      set file $prefix$zoom.$xtile.$ytile.$suffix
-      if {[file exists $file]} {lappend clean $file}
-      incr xtile
-    }
-    incr ytile
-  }
-  set file $prefix$zoom.$xmin.$ymin-$zoom.$xmax.$ymax.$suffix
-  if {[file exists $file]} {lappend clean $file}
-  if {[file exists $composed.$suffix]} {lappend clean $composed.$suffix}
-  file delete -force {*}$clean
+    # First remove existing tiles
 
-  # Count & measure subsequent requests
-  # - HTTP response = 200 -> OK: valid tiles with map data
-  # - HTTP response = 30x -> URL relocation
-  # - HTTP response = 404 -> resource not found
-  # - HTTP response = ??? -> Error condition
-
-  set start [clock milliseconds]
-  set count 0
-  set valid200 0
-  set valid404 0
-  set error 0
-  set tokens {}
-  set ytile ${::tiles.ymin}
-  while {$ytile <= $ymax} {
-    if {$error} {break}
-    set xtile $xmin
-    while {$xtile <= $xmax} {
-      if {$error} {break}
-      incr count
-      set url $url_pattern
-      regsub "\\$?{x}" $url $xtile url
-      regsub "\\$?{y}" $url $ytile url
-      regsub "\\$?{z}" $url $zoom url
-      set rc [catch "::http::geturl $url \
-	-binary 1 -handler geturl_handler" result]
-      if {$rc} {
-	error_message "URL $url\n$result" return
-	set $::tmpdirvar $::tmpdirval
-	cd $::cwd
-	return 1
-      }
-      set token $result
-      set code [::http::ncode $token]
-      set size [::http::size $token]
-      if {$code == 200 && $size > 0} {
-	incr valid200
-      } elseif {$code == 404 && $size > 0} {
-	incr valid404
-      } else {
-	incr error
-      }
-      lappend tokens $token
-      incr xtile
-    }
-    incr ytile
-  }
-  set stop [clock milliseconds]
-  puts "\r[mc m71 $count]"
-
-  # Report result
-
-  set valid [expr $valid200+$valid404]
-  puts "[mc m72 $valid $valid404 [expr $count-$valid]]"
-
-  # Measure time(s)
-
-  set time [expr $stop-$start]
-  puts ""
-  puts "[mc m73 $time $count]"
-  puts "[mc m74 [format "%.1f" [expr $time/(1.*$count)]]]"
-  puts "... [mc m75]\n"
-
-  if {$valid == 0} {
-    foreach token $tokens {::http::cleanup $token}
-    file delete -force {*}[glob -nocomplain -type f [pid].tile.*.TMP]
-    set $::tmpdirvar $::tmpdirval
-    cd $::cwd
-    return 1
-  }
-
-  # Write server tiles with size > 0 as PNG files
-
-  puts "[mc m76 $folder] ...\n"
-  set count 0
-  set valid 0
-  set ytile ${::tiles.ymin}
-  while {$ytile <= $ymax} {
-    set xtile $xmin
-    while {$xtile <= $xmax} {
-      set tile $prefix$zoom.$xtile.$ytile.$suffix
-      set token [lindex $tokens $count]
-      set ncode [::http::ncode $token]
-      set file [set ${token}(file)]
-      if {$file != "" && ($ncode == 200 || $ncode == 404)} {
-	file rename -force $file $tile
-	incr valid
-      }
-      incr count
-      ::http::cleanup $token
-      if {![expr $valid%100]} {puts "\r[mc m76a $valid] ..."; update}
-      incr xtile
-    }
-    incr ytile
-  }
-  file delete -force {*}[glob -nocomplain -type f [pid].tile.*.TMP]
-  puts "\r[mc m77 $valid]\n"
-
-  set $::tmpdirvar $::tmpdirval
-  cd $::cwd
-
-  if {!${::tiles.compose}} {return 0}
-
-  # Compose tiles
-
-  cd $folder
-  # Replace missing tiles by black tile
-  catch "exec {$::convert} -size 256x256 canvas:black tmp.0000.png"
-  # Write new composed image
-  puts "[mc m78 $composed.$suffix] ...\n"
-  set rc 0
-  set count 0
-  set ytile $ymin
-  set col {}
-  set clean {}
-  while {$ytile <= $ymax} {
-    set xtile $xmin
-    set row {}
-    while {$xtile <= $xmax} {
-      incr count
-      set tile $prefix$zoom.$xtile.$ytile.$suffix
-      if {![file exists $tile]} {file copy -force tmp.0000.png $tile}
-      lappend row $tile
-      incr xtile
-    }
-    lappend clean {*}$row
-    # Compose horizontal tiles to 1 horizontal strip
-    puts "\r[mc m79 $xcount $xmin $ytile $xmax $ytile] ..."
-    update
-    set command [list $::convert {*}$row +append tmp.$ytile.png]
-    set rc [catch "exec $command" result]
-    if {$rc} {break}
-    lappend col tmp.$ytile.png
-    incr ytile
-  }
-  # Compose horizontal strips to 1 vertical strip = composed tile
-  if {!$rc} {
-    puts "\r[mc m80 $ycount] ..."
-    update
-    set command [list $::convert {*}$col -append $composed.$suffix]
-    set rc [catch "exec $command" result]
-  }
-  if {!$rc} {
-    puts "\r[mc m81 $composed.$suffix]"
-  } else {
-    puts "[mc m82]:"
-    puts "$result"
-  }
-  # Delete temporary files and remaining files after failed composition
-  file delete -force {*}[glob -nocomplain -type f tmp.\[0-9\]*.png]
-  file delete -force {*}[glob -nocomplain -type f $composed-\[0-9\]*.$suffix]
-  if {!${::tiles.keep}} {
-    file delete -force {*}$clean
-    puts "[mc m83]"
-  }
-  puts ""
-  update
-  cd ${::cwd}
-  if {$rc} {return 1}
-
-  # Compose map image with alpha transparent hillshading overlay
-
-  if {$srv == "srv"} {
-    if {${::shading.onoff} && ${::shading.layer} == "asmap"} {return 0}
-  } elseif {$srv == "ovl"} {
-    puts "[mc m84] ..."
-    cd $folder
-    set tiles {}
-    set ytile ${::tiles.ymin}
+    set clean {}
+    set ytile $ymin
     while {$ytile <= $ymax} {
       set xtile $xmin
       while {$xtile <= $xmax} {
-	set tile $prefix$zoom.$xtile.$ytile
-	set map $tile.png
-	set ovl $tile.ovl.png
-	if {[file exists $map] && [file exists $ovl]} {
-	  catch "exec {$::convert} $map $ovl -composite tmp.$map"
-	  file rename -force tmp.$map $map
-	  lappend tiles $ovl
-	}
+	set file $prefix$zoom.$xtile.$ytile.$suffix
+	lappend clean $file
 	incr xtile
       }
       incr ytile
     }
-    set map $composed.png
-    set ovl $composed.ovl.png
-    if {[file exists $map] && [file exists $ovl]} {
-      catch "exec {$::convert} $map $ovl -composite tmp.$map"
-      file rename -force tmp.$map $map
-      lappend tiles $ovl
+    lappend clean $prefix$zoom.$xmin.$ymin-$zoom.$xmax.$ymax.$suffix
+    lappend clean $composed.$suffix $composed.$srv.log
+    file delete -force {*}$clean
+
+    # Start server
+
+    srv_start $srv
+    if {![process_running $srv]} {
+      set abort 1
+      break
     }
-    file delete -force {*}$tiles
-    puts "[mc m81 $map]"
+
+    # Download with "curl" or "http"
+
+    if {${::use.curl}} {
+      set abort [download_with_curl]
+    } else {
+      set abort [download_with_http]
+    }
+
+    # Kill sever
+
+    process_kill $srv
+
+    # Report result
+
+    puts "\n[mc m72 $total $valid]"
+
+    # Measure time(s)
+
+    set time [expr $stop-$start]
     puts ""
-    cd ${::cwd}
+    puts "[mc m75 $time $valid]"
+    if {$valid} {puts "[mc m76 [format "%.1f" [expr $time/(1.*$valid)]]]"}
+    puts "... [mc m77]\n"
+
+    if {$valid == 0} {set abort 1}
+    if {$abort} {break}
+
   }
-  if {!${::composed.show}} {return 0}
+
+  # Download ended abnormally, see log file
+
+  close $fdlog
+  if {$abort || $valid != $total} {
+    puts "\n[mc m73 $folder/$logfile]"
+  } else {
+    file delete -force $logfile
+  }
+
+  cd $::cwd
+
+  # Abort job due to error
+
+  if  {$abort} {return}
+
+  # "gm" script & batch command
+
+  set gm_script $tmppfx.gmscript.txt
+
+  proc gm_batch {script} {
+    set cmd [list $::gm batch -echo on $script]
+
+    if {$::tcl_platform(os) == "Windows NT"} {
+      set rc [catch {open "| $cmd 2>@1" r} result]
+    } elseif {$::tcl_platform(os) == "Linux"} {
+      set rc [catch {open "| $cmd 2>@ stdout" r} result]
+    }
+
+    set fd $result
+    fconfigure $fd -blocking 0 -buffering line
+    fileevent $fd readable "
+	if {\[eof $fd\]} {
+	  set ::gm_rc \[catch {close $fd} ::gm_result];
+	} else {
+	  while {\[gets $fd line\] >= 0} {puts \"\\r> \$line\"};
+	}"
+
+    vwait ::gm_rc
+    set return [list $::gm_rc $::gm_result]
+    unset ::gm_rc ::gm_result
+    return $return
+  }
+
+  # Compose map tiles and alpha transparent hillshading overlay tiles
+
+  if {${::shading.onoff} && ${::shading.layer} == "asmap"} {
+
+  cd $folder
+  set $::tmpdirvar [pwd]
+
+  puts "[mc m84] ...\n"
+  set clean {}
+  set start [clock milliseconds]
+  set fd [open $gm_script w]
+  set ytile $ymin
+  while {$ytile <= $ymax} {
+    set xtile $xmin
+    while {$xtile <= $xmax} {
+	set tile $prefix$zoom.$xtile.$ytile
+	incr xtile
+	if {![file exists $tile.ovl]} {continue}
+	lappend clean $tile.ovl
+	if {![file exists $tile.png]} {continue}
+	puts $fd "composite $tile.ovl $tile.png $tile.png"
+    }
+    incr ytile
+  }
+  close $fd
+
+  lassign [gm_batch $gm_script] rc result
+  set stop [clock milliseconds]
+
+  if {$rc} {puts "[mc m74 $result]"}
+
+  set time [expr $stop-$start]
+  puts "[mc m85 $time]"
+  file delete -force {*}$clean $gm_script
+
+  set $::tmpdirvar $::tmpdirval
+  cd $::cwd
+
+  if {$rc} {return}
+
+  }
+
+  if {!${::tiles.compose}} {return}
+
+  # Compose horizontal tiles to tile strips
+
+  cd $folder
+  set $::tmpdirvar [pwd]
+
+  puts "\n[mc m78 $composed.png] ..."
+
+  puts "\u2022 [mc m79]\n"
+  set start [clock milliseconds]
+  # Fill missing tiles by black tile
+  exec $::gm convert -size 256x256 xc:black $tmppfx.void.png
+  set tiles {}
+  set fd [open $gm_script w]
+  set ytile $ymin
+  set col {}
+  while {$ytile <= $ymax} {
+    set xtile $xmin
+    set row {}
+    while {$xtile <= $xmax} {
+      set tile $prefix$zoom.$xtile.$ytile.png
+      if {[file exists $tile]} {
+	lappend row $tile
+	lappend tiles $tile
+      } else {
+	lappend row $tmppfx.void.png
+      }
+      incr xtile
+    }
+    puts $fd "convert $row +append $tmppfx.$ytile.strip.png"
+    lappend col $tmppfx.$ytile.strip.png
+    incr ytile
+  }
+  close $fd
+  file delete -force $tmppfx.void.png
+
+  lassign [gm_batch $gm_script] rc result
+  set stop [clock milliseconds]
+
+  if {$rc} {puts "[mc m74 $result]"}
+
+  set time [expr $stop-$start]
+  puts "[mc m85 $time]"
+  file delete -force $gm_script
+
+  set $::tmpdirvar $::tmpdirval
+  cd $::cwd
+
+  if {$rc} {
+    file delete -force {*}$col
+    return
+  }
+
+  # Compose horizontal tile strips to image
+
+  cd $folder
+  set $::tmpdirvar [pwd]
+
+  puts "\u2022 [mc m80]\n"
+  set start [clock milliseconds]
+  set fd [open $gm_script w]
+  puts $fd "convert $col -append $composed.png"
+  close $fd
+
+  lassign [gm_batch $gm_script] rc result
+  set stop [clock milliseconds]
+
+  if {$rc} {puts "[mc m74 $result]"}
+
+  set time [expr $stop-$start]
+  puts "[mc m85 $time]"
+  file delete -force $gm_script {*}$col
+
+  if {!$rc} {puts "[mc m81 $composed.png]"}
+
+  # Delete tiles
+
+  if {!${::tiles.keep}} {
+    file delete -force {*}$tiles
+    puts "\n[mc m83]"
+  }
+
+  set $::tmpdirvar $::tmpdirval
+  cd $::cwd
+
+  if {$rc} {return}
+
+  if {!${::composed.show}} {return}
 
   # Show composed image by background job
 
   set file $folder/$composed.png
-  if {![file exists $file]} {return 1}
+  if {![file exists $file]} {return}
   if {$::tcl_platform(platform) == "windows"} {
     set script "exec cmd.exe /C START {} \"$file\""
   } elseif {$::tcl_platform(os) == "Linux"} {
     set script "exec nohup xdg-open \"$file\" >/dev/null"
   }
   after 0 "catch {$script}"
-  return 0
+  return
 
+}
+
+# Wait for valid selection or finish
+
+while {1} {
+  vwait action
+  if {$action == 0} {
+    if {[winfo manager .styles] != ""} {save_theme_settings}
+    foreach item {global shading tiles} {save_${item}_settings}
+    exit
+  }
+  unset action
+  if {[selection_ok]} {break}
+  busy_state 0
 }
 
 # Run render job
 
-foreach item {srv ovl} {
-  srv_start $item
-  if {![process_running $item]} {break}
-  set rc [run_render_job $item]
-  process_kill $item
-  if {$rc} {break}
-}
-tk busy forget .buttons
+run_render_job
+busy_state 0
 
 # Wait for new selection or finish
 
 update idletasks
 if {![info exists action]} {vwait action}
 
-# After changing Mapsforge map(s) or theme:
-# Run render job
+# After changing settings: run render job
 
 while {$action == 1} {
   unset action
-  if {[selection_ok]} {
-    foreach item {srv ovl} {
-      srv_start $item
-      if {![process_running $item]} {break}
-      set rc [run_render_job $item]
-      process_kill $item
-      if {$rc} {break}
-    }
-  }
-  tk busy forget .buttons
+  if {[selection_ok]} {run_render_job}
+  busy_state 0
   if {![info exists action]} {vwait action}
 }
 unset action
