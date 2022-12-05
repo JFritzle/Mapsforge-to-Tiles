@@ -1,3 +1,10 @@
+2022-12-05
+
+- Add button to deselect all overlays
+- Redesign download workflow
+- Switch graphics tool from 'ImageMagick' to 'GraphicsMagick'
+- Option to download tiles either by built-in "http" or by program "curl"
+
 2022-11-25
 
 - Add hint about using ZIP archives with elevation data
