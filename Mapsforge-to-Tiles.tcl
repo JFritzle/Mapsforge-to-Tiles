@@ -94,7 +94,7 @@ if {[file exist $file]} {
 # but preserve commands if resolved by search path
 
 # - commands
-set cmds {java_cmd curl_cmd gm_cmd}
+set cmds {java_cmd curl_cmd gm_cmd magick_cmd}
 # - commands + folders + files
 set list [concat $cmds ini_folder maps_folder themes_folder server_jar]
 
@@ -149,6 +149,7 @@ set threads.min 0
 set threads.max 8
 
 set use.curl 0
+set use.magick "gm"
 set tiles.folder $cwd
 set tiles.abort 0
 # For compatibility only:
@@ -301,9 +302,11 @@ proc puts_console args {
       .console.txt delete end-2l end-1l
     }
     .console.txt insert end $txt
-    .console.txt see end
     .console.txt configure -state disabled
-    if {[winfo ismapped .console]} {update idletasks}
+    if {[winfo ismapped .console]} {
+      .console.txt see end
+      update idletasks
+    }
   } else {
     global errorCode errorInfo
     if {[catch "puts_tcl $args" msg]} {
@@ -347,18 +350,14 @@ if {$tcl_platform(os) == "Windows NT"} {
 	{HKEY_CURRENT_USER\Control Panel\International} {LocaleName}]
     set language [regsub {(.*)-(.*)} $language {\1}]
   }
-  set tmpdirvar ::env(TMP)
 } elseif {$tcl_platform(os) == "Linux"} {
   if {$language == ""} {
     set language [regsub {(.*)_(.*)} $env(LANG) {\1}]
     if {$env(LANG) == "C"} {set language "en"}
   }
-  set tmpdirvar ::env(TMPDIR)
-  if {![info exists $tmpdirvar]} {set $tmpdirvar /tmp}
 } else {
   error_message [mc e03 $tcl_platform(os)] exit
 }
-set tmpdirval [set $tmpdirvar]
 
 # Check commands & folders
 
@@ -446,39 +445,101 @@ set gm ""
 if {[info exists gm_cmd] && $gm_cmd != ""} {
   set gm [join [auto_execok $gm_cmd]]
 }
+
 if {$gm == ""} {
   if {$::tcl_platform(os) == "Windows NT"} {
-    foreach var {"ProgramFiles" "ProgramFiles(x86)"} {
-      if {![info exists env($var)]} {continue}
-      set val $env($var)
-      set gm [lindex [glob -nocomplain -type f \
-	"[file normalize $val]/GraphicsMagick*/gm.exe"] end]
+    foreach dir {"GraphicsMagick*Q8*" "GraphicsMagick*"} {
+      foreach var {"ProgramFiles" "ProgramFiles(x86)"} {
+	if {![info exists env($var)]} {continue}
+	set val $env($var)
+	set gm [lindex [glob -nocomplain -type f \
+	  "[file normalize $val]/$dir/gm.exe"] end]
+	if {$gm != ""} {break}
+      }
       if {$gm != ""} {break}
     }
   } elseif {$::tcl_platform(os) == "Linux"} {
     set gm [join [auto_execok gm]]
   }
 }
-if {$gm == ""} {error_message [mc e09] exit}
 
 # Set resource limits of GraphicsMagick
-# Resource value "-1" is equivalent to "unlimited"
-# See http://www.graphicsmagick.org/GraphicsMagick.html for more information
+# - GraphicsMagick uses defaults for unset resource values
+# - Resource value "-1" is equivalent to "unlimited"
+# See http://www.graphicsmagick.org/GraphicsMagick.html
 
-# Maximum amount of disk space allowed for use by the pixel cache
-set env(MAGICK_LIMIT_DISK)	"-1"
-# Maximum number of open files
-set env(MAGICK_LIMIT_FILES)	"16384"
-# Maximum size of a memory mapped file allocation
-set env(MAGICK_LIMIT_MAP)	"4GiB"
-# Maximum amount of memory to allocate from the heap
-set env(MAGICK_LIMIT_MEMORY)	"2GiB"
-# Maximum number of total pixels (rows x colums) to allow for any image
-set env(MAGICK_LIMIT_PIXELS)	"1GiB"
-# Maximum pixel width of an image read, or created
-set env(MAGICK_LIMIT_WIDTH)	"10MiP"
-# Maximum pixel height of an image read, or created
-set env(MAGICK_LIMIT_HEIGHT)	"10MiP"
+if {$gm != ""} {
+# set env(MAGICK_LIMIT_DISK)	"-1"
+  set env(MAGICK_LIMIT_FILES)	"16384"
+# set env(MAGICK_LIMIT_MAP)	"4GiB"
+# set env(MAGICK_LIMIT_MEMORY)	"2GiB"
+# set env(MAGICK_LIMIT_WIDTH)	"10MiP"
+# set env(MAGICK_LIMIT_HEIGHT)	"10MiP"
+# set env(MAGICK_LIMIT_PIXELS)	"1GiB"
+
+# catch "exec {$gm} convert -list Resource" result
+# puts "[file tail $gm] - $result\n"
+}
+
+# Looking for installed ImageMagick's tool "magick"
+
+set magick ""
+if {[info exists magick_cmd] && $magick_cmd != ""} {
+  set magick [join [auto_execok $magick_cmd]]
+}
+
+if {$magick == ""} {
+  if {$::tcl_platform(os) == "Windows NT"} {
+    foreach dir {"ImageMagick*Q8*" "ImageMagick*"} {
+      foreach var {"ProgramFiles" "ProgramFiles(x86)"} {
+	if {![info exists env($var)]} {continue}
+	set val $env($var)
+	set magick [lindex [glob -nocomplain -type f \
+	  "[file normalize $val]/$dir/magick.exe"] end]
+	if {$magick != ""} {break}
+      }
+      if {$magick != ""} {break}
+    }
+  } elseif {$::tcl_platform(os) == "Linux"} {
+    set magick [join [auto_execok magick]]
+  }
+}
+
+# Set resource limits of ImageMagick
+# - ImageMagick uses defaults for unset resource values
+# - Resource value "" is equivalent to "unlimited"
+# See https://imagemagick.org/script/security-policy.php#policy
+# and https://imagemagick.org/script/resources.php
+
+if {$magick != ""} {
+  set fd [open "$ini_folder/policy.xml" w]
+  puts $fd {?xml version="1.0" encoding="UTF-8"?>}
+  puts $fd {<!DOCTYPE policymap [}
+  puts $fd {  <!ELEMENT policymap (policy)*>}
+  puts $fd {  <!ATTLIST policymap xmlns CDATA #FIXED ''>}
+  puts $fd {  <!ELEMENT policy EMPTY>}
+  puts $fd {  <!ATTLIST policy xmlns CDATA #FIXED '' domain NMTOKEN #REQUIRED}
+  puts $fd {    name NMTOKEN #IMPLIED pattern CDATA #IMPLIED}
+  puts $fd {    rights NMTOKEN #IMPLIED}
+  puts $fd {    stealth NMTOKEN #IMPLIED value CDATA #IMPLIED>}
+  puts $fd {]>}
+  puts $fd {<policymap>}
+# puts $fd {  <policy domain="resource" name="disk" value=""/>}
+# puts $fd {  <policy domain="resource" name="file" value="1536"/>}
+# puts $fd {  <policy domain="resource" name="map" value="4GB"/>}
+# puts $fd {  <policy domain="resource" name="memory" value="10GB"/>}
+# puts $fd {  <policy domain="resource" name="area" value="10GB"/>}
+# puts $fd {  <policy domain="resource" name="width" value="10MiP"/>}
+# puts $fd {  <policy domain="resource" name="height" value="10MiP"/>}
+  puts $fd {</policymap>}
+  close $fd
+  set env(MAGICK_CONFIGURE_PATH) $ini_folder
+
+# catch "exec {$magick} -list Resource" result
+# puts "[file tail $magick] - $result\n"
+}
+
+if {$gm == "" && $magick == ""} {error_message [mc e09] exit}
 
 # Recursively find files procedure
 
@@ -1525,7 +1586,7 @@ proc save_tiles_settings {} {uplevel #0 {
 	  coord.xmin coord.xmax coord.ymin coord.ymax \
 	  tiles.write tiles.abort tiles.compose tiles.keep composed.show \
 	  tcp.interface tcp.port shading.layer \
-	  use.curl http.wait http.keep} {
+	  use.curl use.magick http.wait http.keep} {
     puts $fd "$name=[set $name]"
   }
   close $fd
@@ -1796,9 +1857,28 @@ if {$curl == ""} {
   tooltip .use_curl [mc c30t]
 }
 
+# Use GraphicsMagick or ImageMagick for composition
+
+radiobutton .use_gmagick -text [mc c32 GraphicsMagick] -anchor w \
+	-variable use.magick -value "gm"
+radiobutton .use_imagick -text [mc c32 ImageMagick] -anchor w \
+	-variable use.magick -value "magick"
+pack .use_gmagick .use_imagick -in .r -expand 1 -fill x
+
+if {$gm == ""} {
+  set use.magick "magick"
+  .use_gmagick configure -state disabled
+  tooltip .use_gmagick [mc c32t GraphicsMagick]
+}
+if {$magick == ""} {
+  set use.magick "gm"
+  .use_imagick configure -state disabled
+  tooltip .use_imagick [mc c32t ImageMagick]
+}
+
 # Compose tiles
 
-checkbutton .tiles_compose -text [mc c32] \
+checkbutton .tiles_compose -text [mc c33] \
 	-variable tiles.compose -command tiles_compose_onoff
 pack .tiles_compose -in .r -expand 1 -fill x
 
@@ -1817,12 +1897,12 @@ tiles_compose_onoff
 
 # Keep tiles after composing to image
 
-checkbutton .tiles_keep -text [mc c33] -variable tiles.keep
+checkbutton .tiles_keep -text [mc c34] -variable tiles.keep
 pack .tiles_keep -in .tiles_compose_onoff -expand 1 -fill x
 
 # Show composed image
 
-checkbutton .show_composed -text [mc c34] -variable composed.show
+checkbutton .show_composed -text [mc c35] -variable composed.show
 pack .show_composed -in .tiles_compose_onoff -expand 1 -fill x
 
 # Action buttons
@@ -1833,17 +1913,13 @@ button .buttons.cancel -text [mc b02] -width 12 -command {set action 0}
 pack .buttons -in .r -ipady 5
 pack .buttons.continue .buttons.cancel -side left
 
-bind .buttons.continue <ButtonPress-1> {busy_state 1}
-focus .buttons.continue
-
 proc busy_state {state} {
   if {$state} {
-    tk busy hold .buttons
-    .buttons.continue invoke
     .buttons.continue configure -state disabled -relief sunken
+    .buttons.cancel configure -text [mc b03] -command cancel_render_job
   } else {
     .buttons.continue configure -state normal -relief raised
-    tk busy forget .buttons
+    .buttons.cancel configure -text [mc b02] -command {set action 0}
   }
   update idletasks
 }
@@ -1855,6 +1931,7 @@ checkbutton .output -text [mc c99] \
 
 proc show_hide_console {} {
   if {${::console.show}} {
+    .console.txt see end
     if {${::console.geometry} == ""} {
       wm deiconify .console
     } else {
@@ -1884,7 +1961,8 @@ if {$console != -1} {
 
 proc filler_width_right {} {
   set width 0
-  foreach item {.use_curl .tiles_compose .tiles_keep .show_composed} {
+  foreach item {.use_curl .use_gmagick .use_imagick \
+	.tiles_compose .tiles_keep .show_composed} {
     set width [expr max($width,[winfo reqwidth $item])]
   }
   return $width
@@ -1992,13 +2070,13 @@ proc process_start {command process} {
   puti "[mc m51 $pid $exe]"
 
   append mark \$${process}::cr {\[} [string toupper $process] {\]}
+
   fileevent $fd readable "
+	while {\[gets $fd line\] >= 0} {puts \"$mark \$line\"};
 	if {\[eof $fd\]} {
 	  close $fd;
 	  namespace delete $process;
 	  puti \"[mc m52 $pid $exe]\";
-	} else {
-	  while {\[gets $fd line\] >= 0} {puts \"$mark \$line\"};
 	}"
 
 }
@@ -2181,9 +2259,25 @@ proc srv_start {srv} {
 
 }
 
+# Cancel render job
+
+proc cancel_render_job {} {
+
+  set ::cancel 1
+  if {![info exists ::batch::pid]} {return}
+  set pid ${::batch::pid}
+  if {$::tcl_platform(os) == "Windows NT"} {
+    catch {exec TASKKILL /F /PID $pid}
+  } elseif {$::tcl_platform(os) == "Linux"} {
+    catch {exec kill -SIGTERM $pid}
+  }
+
+}
+
 # Run render job
 
 proc geturl_handler {file socket token} {
+
   upvar #0 $token state
   set size 0
   if {[string first "image/" [set state(type)]] == 0} {
@@ -2195,6 +2289,7 @@ proc geturl_handler {file socket token} {
     while {![eof $socket]} {incr size [string length [read -nonewline $socket]]}
   }
   return $size
+
 }
 
 # Download tiles with "curl"
@@ -2218,7 +2313,6 @@ proc download_with_curl {} {uplevel 1 {
 
   set cmd [list $::curl {*}$curl_args $url]
 
-  set start [clock milliseconds]
   set count 0
   set valid 0
 
@@ -2229,7 +2323,6 @@ proc download_with_curl {} {uplevel 1 {
   }
 
   if {$rc} {
-    set stop [clock milliseconds]
     error_message "Download $url:\n$result" return
     puts $fdlog [format $logfmt "URL" $url]
     puts $fdlog [format $logfmt "curl error" $result]
@@ -2239,22 +2332,21 @@ proc download_with_curl {} {uplevel 1 {
 
   set fd $result
   fconfigure $fd -blocking 0 -buffering line -translation binary
-
+  namespace eval batch {}
+  set ::batch::pid [pid $fd]
   fileevent $fd readable "
-	if {\[eof $fd\]} {
-	  set ::curl_rc \[catch {close $fd} ::curl_result];
-	} else {
-	  while {\[gets $fd line\] >= 0} {
-	    set line \[string trimright \$line \\r\];
-	    puts $fdlog \$line;
-	  };
+	while {\[gets $fd line\] >= 0} {
+	  set line \[string trimright \$line \\r\];
+	  puts $fdlog \$line;
+	  if {\$::cancel == 1} {break};
+	};
+	if {\[eof $fd\] || \$::cancel == 1} {
+	  set ::batch::rc \[catch {close $fd} ::batch::result];
 	}"
-
-  vwait ::curl_rc
-  set stop [clock milliseconds]
-  lassign [list $::curl_rc $::curl_result] rc result
-  unset ::curl_rc ::curl_result
-  if {$rc} {return 1}
+  vwait ::batch::rc
+  lassign [list $::batch::rc $::batch::result] rc result
+  namespace delete batch
+  if {$rc || $::cancel == 1} {return 1}
 
   # Count successfully downloded files
 
@@ -2277,7 +2369,6 @@ proc download_with_curl {} {uplevel 1 {
 
 proc download_with_http {} {uplevel 1 {
 
-  set start [clock milliseconds]
   set count 0
   set valid 0
   set error 0
@@ -2286,6 +2377,7 @@ proc download_with_http {} {uplevel 1 {
     if {$error} {break}
     set xtile $xmin
     while {$xtile <= $xmax} {
+      if {$::cancel == 1} {return 1}
       if {$error} {break}
       set url $url_pattern
       regsub "\\$?{x}" $url $xtile url
@@ -2295,7 +2387,6 @@ proc download_with_http {} {uplevel 1 {
       set rc [catch "::http::geturl $url -keepalive 1 \
 	-binary 1 -handler {geturl_handler $file}" result]
       if {$rc} {
-	set stop [clock milliseconds]
 	error_message "Download $url:\n$result" return
 	puts $fdlog [format $logfmt "URL" $url]
 	puts $fdlog [format $logfmt "HTTP error" $result]
@@ -2330,12 +2421,13 @@ proc download_with_http {} {uplevel 1 {
     }
     incr ytile
   }
-  set stop [clock milliseconds]
   return 0
 
 }}
 
 proc run_render_job {} {
+
+  set ::cancel 0
 
   foreach item {xmin xmax ymin ymax} {
     upvar ::tiles.$item $item
@@ -2374,14 +2466,14 @@ proc run_render_job {} {
 
   catch {cd ${::tiles.folder}}
   set folder [pwd]
-  puts "[mc m71 $folder]\n"
+  puts "[mc m71 $folder]"
   update
 
   set prefix ${::tiles.prefix}
   if {$prefix != "" && ![regexp {[-.]+$} $prefix]} {append prefix "."}
   set tmppfx [pid].tile
 
-  set composed $prefix$zoom.$xmin.$ymin-$zoom.$xmax.$ymax
+  set composed $prefix$zoom.$xmin-$xmax.$ymin-$ymax
 
   # Url
 
@@ -2397,7 +2489,7 @@ proc run_render_job {} {
   set fdlog [open $logfile w]
   fconfigure $fdlog -buffering line
 
-  set abort 0
+  set rc 0
   foreach srv {"srv" "ovl"} {
 
     if {$srv == "ovl" && !${::shading.onoff}} {continue}
@@ -2406,7 +2498,7 @@ proc run_render_job {} {
     if {$srv == "srv"} {set suffix "png"}
     if {$srv == "ovl"} {set suffix "ovl"}
 
-    puts "[mc m70 $url_pattern] ...\n"
+    puts "\n[mc m70 $url_pattern] ...\n"
 
     puts $fdlog $logsep
     puts $fdlog "Download tiles from URL '$url_pattern' ..."
@@ -2433,17 +2525,19 @@ proc run_render_job {} {
 
     srv_start $srv
     if {![process_running $srv]} {
-      set abort 1
+      set rc 1
       break
     }
 
     # Download with "curl" or "http"
 
+    set start [clock milliseconds]
     if {${::use.curl}} {
-      set abort [download_with_curl]
+      set rc [download_with_curl]
     } else {
-      set abort [download_with_http]
+      set rc [download_with_http]
     }
+    set stop [clock milliseconds]
 
     # Kill sever
 
@@ -2459,173 +2553,181 @@ proc run_render_job {} {
     puts ""
     puts "[mc m75 $time $valid]"
     if {$valid} {puts "[mc m76 [format "%.1f" [expr $time/(1.*$valid)]]]"}
-    puts "... [mc m77]\n"
+    puts "... [mc m77]"
 
-    if {$valid == 0} {set abort 1}
-    if {$abort} {break}
+    if {$valid == 0} {set rc 1}
+    if {$rc || $::cancel == 1} {break}
 
   }
-
-  # Download ended abnormally, see log file
-
   close $fdlog
-  if {$abort || $valid != $total} {
-    puts "\n[mc m73 $folder/$logfile]"
-  } else {
-    file delete -force $logfile
-  }
 
   cd $::cwd
 
-  # Abort job due to error
+  # Download cancelled or ended abnormally
 
-  if  {$abort} {return}
+  if {$::cancel == 1} {
+    puts "\n[mc m73a]"
+    file delete -force $folder/$logfile
+    return
+  } elseif {$rc || $valid != $total} {
+    puts "\n[mc m73b $folder/$logfile]"
+    return
+  } else {
+    file delete -force $folder/$logfile
+  }
 
-  # "gm" script & batch command
+  # Start tiles processing
 
-  set gm_script $tmppfx.gmscript.txt
+  upvar ::use.magick use_magick
+  set exe [set ::$use_magick]
 
-  proc gm_batch {script} {
-    set cmd [list $::gm batch -echo on $script]
+  cd $folder
+  if {$use_magick == "gm"} {
+    set ::env(MAGICK_TMPDIR) $folder
+  } elseif {$use_magick == "magick"} {
+    set ::env(MAGICK_TEMPORARY_PATH) $folder
+  }
 
+  # Batch processing procedure
+
+  proc batch_proc {exe args} {
+    lappend cmd $exe {*}$args
+    set exe [file tail $exe]
     if {$::tcl_platform(os) == "Windows NT"} {
       set rc [catch {open "| $cmd 2>@1" r} result]
     } elseif {$::tcl_platform(os) == "Linux"} {
       set rc [catch {open "| $cmd 2>@ stdout" r} result]
     }
-
+    if {$rc} {return [list $rc $result]}
     set fd $result
     fconfigure $fd -blocking 0 -buffering line
+    namespace eval batch {}
+    set ::batch::pid [pid $fd]
     fileevent $fd readable "
-	if {\[eof $fd\]} {
-	  set ::gm_rc \[catch {close $fd} ::gm_result];
-	} else {
-	  while {\[gets $fd line\] >= 0} {puts \"\\r> \$line\"};
+	while {\[gets $fd line\] >= 0} {
+	  puts \"\\r> $exe \$line\";
+	  if {\$::cancel == 1} {break};
+	};
+	if {\[eof $fd\] || \$::cancel == 1} {
+	  set ::batch::rc \[catch {close $fd} ::batch::result];
 	}"
-
-    vwait ::gm_rc
-    set return [list $::gm_rc $::gm_result]
-    unset ::gm_rc ::gm_result
+    vwait ::batch::rc
+    set return [list $::batch::rc $::batch::result]
+    namespace delete batch
     return $return
   }
+
+  # Fill missing tiles by white tile
+
+  set void $tmppfx.void.png
+  if {$use_magick == "gm"} {
+    exec $exe convert -size 256x256 xc:white $void
+  } elseif {$use_magick == "magick"} {
+    exec $exe -size 256x256 canvas:white $void
+  }
+
+  while {1} {
 
   # Compose map tiles and alpha transparent hillshading overlay tiles
 
   if {${::shading.onoff} && ${::shading.layer} == "asmap"} {
 
-  cd $folder
-  set $::tmpdirvar [pwd]
-
-  puts "[mc m84] ...\n"
-  set clean {}
+  puts "\n[mc m84] ...\n"
   set start [clock milliseconds]
-  set fd [open $gm_script w]
+
+  set batch_file $tmppfx.batch.txt
+  set fd [open $batch_file w]
+  if {$use_magick == "magick"} \
+	{puts $fd "-format \"%f null: %t.ovl -layers composite %f\\n\""}
+  set clean {}
   set ytile $ymin
   while {$ytile <= $ymax} {
     set xtile $xmin
     while {$xtile <= $xmax} {
-	set tile $prefix$zoom.$xtile.$ytile
-	incr xtile
-	if {![file exists $tile.ovl]} {continue}
-	lappend clean $tile.ovl
-	if {![file exists $tile.png]} {continue}
-	puts $fd "composite $tile.ovl $tile.png $tile.png"
+      set tile $prefix$zoom.$xtile.$ytile
+      incr xtile
+      set map $tile.png
+      set ovl $tile.ovl
+      if {![file exists $ovl]} {continue}
+      lappend clean $ovl
+      if {![file exists $tile.png]} {set map $void}
+      if {$use_magick == "gm"} {
+	puts $fd "composite $ovl $map $tile.png"
+      } elseif {$use_magick == "magick"} {
+ 	puts $fd "$map null: $ovl -layers composite -identify -write $tile.png -delete 0--1"
+      }
     }
     incr ytile
   }
   close $fd
 
-  lassign [gm_batch $gm_script] rc result
+  if {$use_magick == "gm"} {
+    lassign [batch_proc $exe batch -echo on $batch_file] rc result
+  } elseif {$use_magick == "magick"} {
+    lassign [batch_proc $exe -script $batch_file] rc result
+  }
   set stop [clock milliseconds]
+  file delete -force $batch_file {*}$clean
 
-  if {$rc} {puts "[mc m74 $result]"}
-
-  set time [expr $stop-$start]
-  puts "[mc m85 $time]"
-  file delete -force {*}$clean $gm_script
-
-  set $::tmpdirvar $::tmpdirval
-  cd $::cwd
-
-  if {$rc} {return}
+  if {$::cancel == 1} {
+    puts "[mc m74a $exe]"
+    break
+  } elseif {$rc} {
+    puts "[mc m74b $exe $result]"
+    break
+  } else {
+    set time [expr $stop-$start]
+    puts "[mc m85 $time]"
+  }
 
   }
 
-  if {!${::tiles.compose}} {return}
+  if {!${::tiles.compose}} {break}
 
-  # Compose horizontal tiles to tile strips
-
-  cd $folder
-  set $::tmpdirvar [pwd]
+  # Compose tiles to image
 
   puts "\n[mc m78 $composed.png] ..."
 
-  puts "\u2022 [mc m79]\n"
   set start [clock milliseconds]
-  # Fill missing tiles by black tile
-  exec $::gm convert -size 256x256 xc:black $tmppfx.void.png
+
+  set batch_file $tmppfx.batch.txt
+  set fd [open $batch_file w]
   set tiles {}
-  set fd [open $gm_script w]
   set ytile $ymin
-  set col {}
   while {$ytile <= $ymax} {
     set xtile $xmin
-    set row {}
     while {$xtile <= $xmax} {
       set tile $prefix$zoom.$xtile.$ytile.png
       if {[file exists $tile]} {
-	lappend row $tile
 	lappend tiles $tile
+	puts $fd $tile
       } else {
-	lappend row $tmppfx.void.png
+	puts $fd $void
       }
       incr xtile
     }
-    puts $fd "convert $row +append $tmppfx.$ytile.strip.png"
-    lappend col $tmppfx.$ytile.strip.png
     incr ytile
   }
   close $fd
-  file delete -force $tmppfx.void.png
 
-  lassign [gm_batch $gm_script] rc result
+  set args "montage -mode concatenate -tile ${xcount}x${ycount} @$batch_file $composed.png"
+  puts "> [file tail $exe] $args"
+  lassign [batch_proc $exe {*}$args] rc result
+  file delete -force $batch_file
   set stop [clock milliseconds]
 
-  if {$rc} {puts "[mc m74 $result]"}
-
-  set time [expr $stop-$start]
-  puts "[mc m85 $time]"
-  file delete -force $gm_script
-
-  set $::tmpdirvar $::tmpdirval
-  cd $::cwd
-
-  if {$rc} {
-    file delete -force {*}$col
-    return
+  if {$::cancel == 1} {
+    puts "[mc m74a $exe]"
+    file delete -force {*}$tiles
+    break
+  } elseif {$rc} {
+    puts "[mc m74b $exe $result]"
+    break
+  } else {
+    set time [expr $stop-$start]
+    puts "[mc m85 $time]"
+    puts "[mc m81 $composed.png]"
   }
-
-  # Compose horizontal tile strips to image
-
-  cd $folder
-  set $::tmpdirvar [pwd]
-
-  puts "\u2022 [mc m80]\n"
-  set start [clock milliseconds]
-  set fd [open $gm_script w]
-  puts $fd "convert $col -append $composed.png"
-  close $fd
-
-  lassign [gm_batch $gm_script] rc result
-  set stop [clock milliseconds]
-
-  if {$rc} {puts "[mc m74 $result]"}
-
-  set time [expr $stop-$start]
-  puts "[mc m85 $time]"
-  file delete -force $gm_script {*}$col
-
-  if {!$rc} {puts "[mc m81 $composed.png]"}
 
   # Delete tiles
 
@@ -2634,11 +2736,15 @@ proc run_render_job {} {
     puts "\n[mc m83]"
   }
 
-  set $::tmpdirvar $::tmpdirval
+  break
+  }
+
+  # End tiles processing
+
+  file delete -force $void
   cd $::cwd
 
-  if {$rc} {return}
-
+  if {$rc || $::cancel == 1} {return}
   if {!${::composed.show}} {return}
 
   # Show composed image by background job
@@ -2666,11 +2772,11 @@ while {1} {
   }
   unset action
   if {[selection_ok]} {break}
-  busy_state 0
 }
 
 # Run render job
 
+busy_state 1
 run_render_job
 busy_state 0
 
@@ -2683,8 +2789,11 @@ if {![info exists action]} {vwait action}
 
 while {$action == 1} {
   unset action
-  if {[selection_ok]} {run_render_job}
-  busy_state 0
+  if {[selection_ok]} {
+    busy_state 1
+    run_render_job
+    busy_state 0
+  }
   if {![info exists action]} {vwait action}
 }
 unset action

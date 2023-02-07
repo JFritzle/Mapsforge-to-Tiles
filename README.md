@@ -16,10 +16,10 @@ User settings file is named _Mapsforge-to-Tiles.ini_. A template file is provide
 
 Resource files are named _Mapsforge-to-Tiles.<locale\>_, where _<locale\>_ matches locale’s 2 lowercase letters ISO 639-1 code. English localized resource file _Mapsforge-to-Tiles.en_ and German localized resource file _Mapsforge-to-Tiles.de_ are provided. Script can be easily localized to any other system’s locale by providing a corresponding resource file using English resource file as a template. 
 
-Rendered tiles may optionally be composed to an image. Composition requires package _ImageMagick_ with package’s command line utility _convert_ to be installed. 
+Rendered tiles may optionally be composed to an image.
 
 Screenshot of graphical user interface:
-![GUI_Windows](https://user-images.githubusercontent.com/62614244/205695795-3295c8cf-d93e-44e5-9410-f4569852e46d.png)
+![GUI_Windows](https://user-images.githubusercontent.com/62614244/217321324-fb73a3e5-f30b-4c63-81bf-3375e8473524.png)
 
 ### Installation
 
@@ -49,11 +49,22 @@ Note 1: [7-Zip](https://www.7-zip.org) file archiver/extractor is able to unpack
 Note 2: Archives of latest releases for Windows at teclab’s tcltk repository may have file extension _.zip_ while they should have extension _.tgz_. Rename extension to _.tgz_ before unpacking archive.  
 Linux: Install packages _tcl, tcllib, tk_ and _tklib_ using Linux package manager. (Ubuntu: _apt install tcl tcllib tk tklib_)
 
-5. GraphicsMagick  
+5. GraphicsMagick and/or ImageMagick  
+At least one installation of either GraphicsMagick or ImageMagick is required!  
+Usually GraphicsMagick is faster than ImageMagick, especially with a large number of tiles.  
+For performance reasons, Q8 variants of both graphics tools are strongly preferable over Q16 variants. Since Q16 variants internally work with 16-bit color values per pixel, each input file with 8-bit color values per pixel must be internally converted to 16-bit color values before processing, which consumes time, twice as much memory and disk space.  
+<br/>GraphicsMagick:  
 Windows: If not yet installed, download and install latest GraphicsMagick version from [download section](https://sourceforge.net/projects/graphicsmagick/files/graphicsmagick-binaries).  
-After installation, utility _gm.exe_ is expected to be found in one of folders _C:\Program Files*\GraphicsMagick*_. An alternative installation path for _gm.exe_ can be specified in the ini file.  
+After installation, program _gm.exe_ is expected to be found in one of folders _C:\Program Files*\GraphicsMagick*_. An alternative installation path for _gm.exe_ can be specified in the ini file.  
 Linux: If not yet installed, install GraphicsMagick package using Linux package manager. (Ubuntu: _apt install graphicsmagick_)  
-Note: Resource limits of GraphicsMagick are hardcoded in tcl script file but can be adjusted if needed in the script file section _Set resource limits of GraphicsMagick_.
+Note: GraphicsMagick resource limits are hard-coded in Tcl script file, but can be adjusted in section _Set resource limits of GraphicsMagick_ if needed.  
+<br/>ImageMagick:  
+ImageMagick version 7 or newer is required! Versions older than version 7 do not include program _magick_ required for scripting.  
+Windows: If not yet installed, download and install latest ImageMagick version from [download section](https://imagemagick.org/script/download.php).  
+After installation, program _magick.exe_ is expected to be found in one of folders _C:\Program Files*\ImageMagick*_. An alternative installation path for _magick.exe_ can be specified in the ini file.  
+Linux: If not yet installed, install ImageMagick package using Linux package manager. (Ubuntu: _apt install imagemagick_)  
+When Linux package managers do only install versions older than version 7 by default, then [installation from source](https://imagemagick.org/script/install-source.php) may be required.  
+Note: ImageMagick resource limits are hard-coded in Tcl script file, but can be adjusted in section _Set resource limits of ImageMagick_ if needed.  
 
 6. curl (optional)  
 Windows: Starting with version 10, a suitable _curl_ is part of Windows and is to be found as _C:\Windows\System32\curl.exe_. If however desired, latest curl version is available at curl's [download section](https://curl.se/download.html). An alternative installation path for _curl.exe_ can be specified in the ini file.  
@@ -130,6 +141,8 @@ Upper left half of image was rendered with hillshading settings as  above but "H
 
 ### Hints
 
+* Output console  
+While console output of tile server can be informative and helpful to verify what is happening as well as to analyze errors, writing to console costs some performance. Therefore the console should be hidden if not needed. 
 * Built-in world map  
 Since the built-in [Mapsforge world map](https://download.mapsforge.org/maps/world/world.map) only shows the coastline, it only serves as a rough overview. Due to map's low resolution, coastlines show inaccurate at high resolution. Because the Mapsforge renderer prefers land on the world map to sea on the selected detailed local map, it may be advisable to disable the built-in world map when rendering coastal regions at high resolution.
 * Area not covered by selected maps consists of "no content" tiles. However whole world is covered, when built-in Mapsforge world map is appended to selected maps.
