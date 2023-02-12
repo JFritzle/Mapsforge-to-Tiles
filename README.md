@@ -63,7 +63,7 @@ ImageMagick version 7 or newer is required! Versions older than version 7 do not
 Windows: If not yet installed, download and install latest ImageMagick version from [download section](https://imagemagick.org/script/download.php).  
 After installation, program _magick.exe_ is expected to be found in one of folders _C:\Program Files*\ImageMagick*_. An alternative installation path for _magick.exe_ can be specified in the ini file.  
 Linux: If not yet installed, install ImageMagick package using Linux package manager. (Ubuntu: _apt install imagemagick_)  
-When Linux package managers do only install versions older than version 7 by default, then [installation from source](https://imagemagick.org/script/install-source.php) may be required.  
+When Linux package managers do only install versions older than version 7 by default, then [installation from source](https://imagemagick.org/script/install-source.php) may be required. Default is to build Q16 variant. Use _./configure \-\-with-quantum-depth=8_ to build Q8 variant.  
 Note: ImageMagick resource limits are hard-coded in Tcl script file, but can be adjusted in section _Set resource limits of ImageMagick_ if needed.  
 
 6. curl (optional)  
