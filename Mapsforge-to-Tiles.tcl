@@ -383,7 +383,7 @@ set rc [catch {open "| $command 2>@1" r} fd]
 if {$rc} {error_message "$fd" exit}
 fconfigure $fd -buffering line -translation auto
 if {[gets $fd line] != -1} {
-  regsub {^.* version "(.*)".*$} $line {\1} data
+  regsub -nocase {^.* version "(.*)".*$} $line {\1} data
   set java_string $data
   if {[regsub {1\.([1-9][0-9]*)\.[0-9]?.*} $data {\1} data] > 0} {
     set java_version $data; # Oracle Java version <= 8
@@ -403,7 +403,7 @@ set rc [catch {open "| $command" r} fd]
 if {$rc} {error_message "$fd" exit}
 fconfigure $fd -buffering line -translation auto
 while {[gets $fd line] != -1} {
-  if {![regsub {^.* version: ((?:[0-9]+\.){2}(?:[0-9]+){1}).*$} $line \
+  if {![regsub -nocase {^.* version: ((?:[0-9]+\.){2}(?:[0-9]+){1}).*$} $line \
 	{\1} data]} {continue}
   set server_string $data
   foreach item [split $data .] \
@@ -2000,7 +2000,6 @@ proc incr_font_size {incr} {
 
 update
 wm positionfrom . program
-if {[tk windowingsystem] == "win32"} {wm state . normal}
 if {[info exists window.geometry]} {
   lassign ${window.geometry} x y width height
   # Adjust horizontal position if necessary
@@ -2008,8 +2007,7 @@ if {[info exists window.geometry]} {
   set x [expr min($x,[winfo vrootx .]+[winfo vrootwidth .]-$width)]
   wm geometry . +$x+$y
 }
-if {[tk windowingsystem] == "x11"} {wm state . normal}
-update idletasks
+wm deiconify .
 
 # Check selection for completeness
 
@@ -2069,8 +2067,7 @@ proc process_start {command process} {
   fileevent $fd readable "
 	while {\[gets $fd line\] >= 0} {puts \"$mark \$line\"};
 	if {\[eof $fd\]} {
-	  close $fd;
-	  namespace delete $process;
+	  close $fd; namespace delete $process;
 	  puti \"[mc m52 $pid $exe]\";
 	}"
 
@@ -2231,6 +2228,8 @@ proc srv_start {srv} {
   lappend command -mxt ${::threads.max}
   lappend command -mit ${::threads.min}
 
+  if {$::server_version >= 1900} {lappend command -term}
+
   puti "[mc m54 $name] ..."
   puts "[join [lmap item $command {regsub {^(.* +.*|())$} $item {"\1"}}]]"
 
@@ -2249,8 +2248,26 @@ proc srv_start {srv} {
   after 20
   update
 
-  if {![process_running $srv]} {error_message [mc m55 $name] return}
+  if {![process_running $srv]} {error_message [mc m55 $name] return; return}
+  set ${srv}::port $port
   set ${srv}::cr "\r"
+
+}
+
+# Mapsforge tile server stop procedure
+
+proc srv_stop {srv} {
+
+  if {$::server_version < 1900} {
+    process_kill $srv
+  } else {
+    namespace upvar $srv port port
+    set url "http://127.0.0.1:${port}/terminate"
+    if {![catch {::http::geturl $url} token]} {
+      if {[::http::status $token] != "eof"} {process_kill $srv}
+      ::http::cleanup $token
+    }
+  }
 
 }
 
@@ -2526,9 +2543,9 @@ proc run_render_job {} {
     }
     set stop [clock milliseconds]
 
-    # Kill sever
+    # Stop server
 
-    process_kill $srv
+    srv_stop $srv
 
     if {$::cancel} {break}
 
