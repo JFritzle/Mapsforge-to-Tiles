@@ -2068,7 +2068,8 @@ proc process_start {command process} {
 	while {\[gets $fd line\] >= 0} {puts \"$mark \$line\"};
 	if {\[eof $fd\]} {
 	  close $fd; namespace delete $process;
-	  puti \"[mc m52 $pid $exe]\";
+	  puti \[mc m52 $pid $exe\];
+	  set $process.eof 1;
 	}"
 
 }
@@ -2078,20 +2079,15 @@ proc process_start {command process} {
 proc process_kill {process} {
 
   if {![namespace exists $process]} {return}
-  namespace upvar $process fd fd pid pid exe exe
+  namespace upvar $process fd fd pid pid
 
-  fileevent $fd readable ""
-  close $fd
-  update
+  fileevent $fd readable [regsub {m52} [fileevent $fd readable] {m53}]
 
   if {$::tcl_platform(os) == "Windows NT"} {
     catch {exec TASKKILL /F /PID $pid}
   } elseif {$::tcl_platform(os) == "Linux"} {
     catch {exec kill -SIGTERM $pid}
   }
-
-  puti "[mc m53 $pid $exe]"
-  namespace delete $process
 
 }
 
@@ -2258,16 +2254,22 @@ proc srv_start {srv} {
 
 proc srv_stop {srv} {
 
+  if {![namespace exists $srv]} {return}
+
   if {$::server_version < 1900} {
     process_kill $srv
   } else {
     namespace upvar $srv port port
     set url "http://127.0.0.1:${port}/terminate"
     if {![catch {::http::geturl $url} token]} {
-      if {[::http::status $token] != "eof"} {process_kill $srv}
+      if {[::http::status $token] == "eof"} {set code 200} \
+      else {set code [::http::ncode $token]}
+      if {$code != 200} {process_kill $srv}
       ::http::cleanup $token
     }
   }
+  if {![info exists ::$srv.eof]} {vwait $srv.eof}
+  unset ::$srv.eof
 
 }
 
@@ -2276,8 +2278,8 @@ proc srv_stop {srv} {
 proc cancel_render_job {} {
 
   set ::cancel 1
-  if {![info exists ::batch::pid]} {return}
-  set pid ${::batch::pid}
+  if {![info exists batch::pid]} {return}
+  set pid $batch::pid
   if {$::tcl_platform(os) == "Windows NT"} {
     catch {exec TASKKILL /F /PID $pid}
   } elseif {$::tcl_platform(os) == "Linux"} {
@@ -2340,18 +2342,17 @@ proc download_with_curl {} {uplevel 1 {
   set fd $result
   fconfigure $fd -blocking 0 -buffering line -translation binary
   namespace eval batch {}
-  set ::batch::pid [pid $fd]
+  set batch::pid [pid $fd]
   fileevent $fd readable "
 	while {\[gets $fd line\] >= 0} {
-	  set line \[string trimright \$line \\r\];
-	  puts $fdlog \$line;
-	  if {\$::cancel} {break};
+	  puts $fdlog \[string trimright \$line \\r\];
+	  if {\$cancel} {break};
 	};
-	if {\[eof $fd\] || \$::cancel} {
-	  set ::batch::rc \[catch {close $fd} ::batch::result];
+	if {\[eof $fd\] || \$cancel} {
+	  set batch::rc \[catch {close $fd} batch::result];
 	}"
-  vwait ::batch::rc
-  lassign [list $::batch::rc $::batch::result] rc result
+  vwait batch::rc
+  lassign [list $batch::rc $batch::result] rc result
   namespace delete batch
   if {$rc || $::cancel} {return 1}
 
@@ -2607,17 +2608,17 @@ proc run_render_job {} {
     set fd $result
     fconfigure $fd -blocking 0 -buffering line
     namespace eval batch {}
-    set ::batch::pid [pid $fd]
+    set batch::pid [pid $fd]
     fileevent $fd readable "
 	while {\[gets $fd line\] >= 0} {
 	  puts \"\\r> $exe \$line\";
-	  if {\$::cancel} {break};
+	  if {\$cancel} {break};
 	};
-	if {\[eof $fd\] || \$::cancel} {
-	  set ::batch::rc \[catch {close $fd} ::batch::result];
+	if {\[eof $fd\] || \$cancel} {
+	  set batch::rc \[catch {close $fd} batch::result];
 	}"
-    vwait ::batch::rc
-    set return [list $::batch::rc $::batch::result]
+    vwait batch::rc
+    set return [list $batch::rc $batch::result]
     namespace delete batch
     return $return
   }
