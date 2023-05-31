@@ -1,3 +1,7 @@
+2023-05-31
+
+- Catch abnormal end of Java, show error message and exit
+
 2023-05-18
 
 - Sync console output with tile server termination
