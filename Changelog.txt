@@ -1,3 +1,8 @@
+2023-06-12
+
+- Verify that ini file variable "java_cmd" is working as expected
+- Improve Java and/or tile server error recognition
+
 2023-05-31
 
 - Catch abnormal end of Java, show error message and exit
