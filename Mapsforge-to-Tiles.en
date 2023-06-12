@@ -33,6 +33,7 @@ e03	"Operating system %s not supported"
 e04	"Command '%s'\nset by variable '%s' is not executable"
 e05	"Folder/file '%s'\nset by variable '%s' does not exist"
 e07	"Mapsforge tile server version is '%s'.\nAt least version '%s' is required!"
+e08	"%s version cannot be determined from command output!\n\nCommand:\n%s\nOutput:\n%s"
 e09	"Neither program 'gm' from 'GraphicsMagick'\nnor program 'convert' from 'ImageMagick' found!"
 e11	"No Mapsforge map found"
 
