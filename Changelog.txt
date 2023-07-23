@@ -1,3 +1,8 @@
+2023-07-23
+
+- README: Updated "Alternative Marlin rendering engine" section
+  and recommend downloading and using latest Marlin renderer
+
 2023-06-12
 
 - Verify that ini file variable "java_cmd" is working as expected
