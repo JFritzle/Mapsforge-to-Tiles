@@ -1,3 +1,11 @@
+2023-08-16
+
+- Simplified and improved validation of integer/float number input
+- Simplified downloading by program "curl"
+  Improved "curl" error recognition
+- Improved cancelling of running composition
+- Changed some localized messages in locale files
+
 2023-07-23
 
 - README: Updated "Alternative Marlin rendering engine" section
