@@ -92,7 +92,7 @@ if {[file exist $file]} {
 
 # Process user settings:
 # replace commands resolved by current search path
-# replace relative paths by absolute paths#
+# replace relative paths by absolute paths
 
 # - commands
 set cmds {java_cmd curl_cmd gm_cmd magick_cmd}
@@ -188,11 +188,6 @@ wm protocol . WM_DELETE_WINDOW "set action 0"
 wm resizable . 0 0
 . configure -bd 5
 
-bind . <Control-plus>  {incr_font_size +1}
-bind . <Control-minus> {incr_font_size -1}
-bind . <Control-KP_Add>      {incr_font_size +1}
-bind . <Control-KP_Subtract> {incr_font_size -1}
-
 bind Button <Return> {%W invoke}
 bind Checkbutton <Return> {%W invoke}
 
@@ -269,7 +264,7 @@ bind .console <Control-KP_Add>      {incr_console_font_size +1}
 bind .console <Control-KP_Subtract> {incr_console_font_size -1}
 
 bind .console <Configure> {
-  if {"%W" != [winfo toplevel "%W"]} {continue}
+  if {"%W" != [winfo toplevel %W]} {continue}
   scan [wm geometry %W] "%%dx%%d+%%d+%%d" cols rows x y
   set console.geometry "$x $y $cols $rows"
 }
@@ -424,7 +419,7 @@ if {$rc || $server_version == 0} \
   {error_message [mc e08 Server [get_shell_command $command] $result] exit}
 
 if {$server_version < 1704 } \
-  {error_message [mc e07 $server_string 0.17.4] exit}
+  {error_message [mc e07 "Mapsforge tile server" $server_string 0.17.4] exit}
 
 # Looking for installed URL tool "curl"
 
@@ -437,6 +432,10 @@ if {$curl != ""} {
   set string [lindex [split $data] 1]
   set curl_version [split $string .]
   set curl_version [expr 1000*[lindex $curl_version 0]+[lindex $curl_version 1]]
+  if {$curl_version < 7075} {
+    puts "[mc e07 curl $string 7.75.0]"
+    set curl ""
+  }
 }
 
 # Looking for installed GraphicsMagick's tool "gm"
@@ -635,6 +634,11 @@ foreach map $maps {
 set selection [.maps_values curselection]
 if {[llength $selection] > 0} {.maps_values see [lindex $selection 0]}
 
+bind .maps_values <<ListboxSelect>> {
+  set maps.selection [lmap index [.maps_values curselection] \
+	{.maps_values get $index}]
+}
+
 # Append Mapsforge world map
 
 checkbutton .maps_world -text [mc l15] -variable maps.world
@@ -699,50 +703,432 @@ pack .fill_l -in .l -fill y
 
 # --- End of main window left column
 
+# Menu columns separator
+
+frame .m -width 2 -bd 2 -relief sunken
+pack .m -side left -expand 1 -fill y -padx 5
+
+# --- Begin of main window right column
+
+# Right menu column
+
+frame .r
+pack .r -anchor n
+
+# X and Y range
+
+labelframe .xyrange -labelanchor w -text [mc l21]:
+pack .xyrange -in .r -expand 1 -fill x -pady 1
+combobox .xyrange_values -width 18 -values [list [mc v22] [mc v23]] \
+	-validate key -validatecommand {return 0}
+if {[info exists xyrange.mode]} {.xyrange_values current ${::xyrange.mode}}
+if {[.xyrange_values current] < 0} {.xyrange_values current 0}
+pack .xyrange_values -in .xyrange -side right -anchor e -expand 1
+
+proc switch_xyrange {} {
+  set range [.xyrange_values current]
+  if {$range == 0} {
+    set w tiles
+    set r coord
+  } else {
+    set r tiles
+    set w coord
+  }
+  foreach item {xmine xmaxe ymine ymaxe} {
+    .${w}.$item configure -takefocus 1 -state normal
+    .${r}.$item configure -takefocus 0 -state readonly
+  }
+}
+
+# Tiles
+
+labelframe .tiles -labelanchor nw -text [mc l22]:
+pack .tiles -in .r -fill x
+
+# Coordinates
+
+labelframe .coord -labelanchor nw -text [mc l23]:
+pack .coord -in .r -fill x
+
+# Common widgets for tiles/coordinates
+
+foreach item {tiles coord} {
+  set widget .${item}
+  label $widget.xminl -text "X min"
+  entry $widget.xmine -textvariable ${item}.xmin -justify right -width 12
+  label $widget.xmaxl -text "X max"
+  entry $widget.xmaxe -textvariable ${item}.xmax -justify right -width 12
+  grid $widget.xminl -in $widget -row 1 -column 1 -sticky w
+  grid $widget.xmine -in $widget -row 1 -column 2 -sticky w
+  grid $widget.xmaxl -in $widget -row 1 -column 3 -sticky e
+  grid $widget.xmaxe -in $widget -row 1 -column 4 -sticky e
+  label $widget.yminl -text "Y min"
+  entry $widget.ymine -textvariable ${item}.ymin -justify right -width 12
+  label $widget.ymaxl -text "Y max"
+  entry $widget.ymaxe -textvariable ${item}.ymax -justify right -width 12
+  grid $widget.yminl -in $widget -row 2 -column 1 -sticky w
+  grid $widget.ymine -in $widget -row 2 -column 2 -sticky w
+  grid $widget.ymaxl -in $widget -row 2 -column 3 -sticky e
+  grid $widget.ymaxe -in $widget -row 2 -column 4 -sticky e
+  grid columnconfigure $widget {1 3} -weight 1
+  grid columnconfigure $widget {2 4} -weight 1
+}
+
+# Zoom level
+
+labelframe .zoom -labelanchor w -text [mc l24]:
+pack .zoom -in .r -fill x -expand 1 -pady 1
+scale .zoom_scale -from $min_zoom_level -to $max_zoom_level -resolution 1 \
+	-orient horizontal -variable zoom.level -command scale_zoom
+label .zoom_value -anchor center -textvariable zoom.level -width 4 \
+	-relief sunken
+pack .zoom_value -in .zoom -side right
+pack .zoom_scale -in .zoom -side left -fill x -expand 1
+
+proc scale_zoom {zoom} {
+  set tmax [expr (1<<$zoom)-1]
+  set xmax 180
+  set ymax 85.0511
+  set tiles_xmin "X min \u2265 0 ([mc t21 0 $xmax°])"
+  set tiles_xmax "X max \u2264 $tmax ([mc t22 $tmax $xmax°])"
+  set tiles_ymin "Y min \u2265 0 ([mc t23 0 $ymax°])"
+  set tiles_ymax "Y max \u2264 $tmax ([mc t24 $tmax $ymax°])"
+  set coord_xmin "X min \u2265 -$xmax ([mc t21 0 $xmax°])"
+  set coord_xmax "X max \u2264 +$xmax ([mc t22 $tmax $xmax°])"
+  set coord_ymin "Y min \u2265 -$ymax ([mc t24 $tmax $ymax°])"
+  set coord_ymax "Y max \u2264 +$ymax ([mc t23 0 $ymax°])"
+  foreach item {tiles coord} {
+    set widget .${item}
+    eval tooltip $widget.xmine "\$${item}_xmin"
+    eval tooltip $widget.xmaxe "\$${item}_xmax"
+    eval tooltip $widget.ymine "\$${item}_ymin"
+    eval tooltip $widget.ymaxe "\$${item}_ymax"
+  }
+  set count [expr $tmax+1]
+  tooltip .zoom_scale "[mc t25 $tmax $count $count]"
+
+  # Shrink tiles range to valid range
+  while {1} {
+    set valid 1
+    foreach item {xmin xmax ymin ymax} {
+      if {[set ::tiles.$item] > $tmax} {set valid 0}
+    }
+    if {$valid} {break}
+    foreach item {xmin xmax ymin ymax} {
+      set ::tiles.$item [expr [set ::tiles.$item]>>1]
+    }
+  }
+
+  # Recalculate tile numbers or coordinate values
+  if {[.xyrange_values current] == 0} {
+    set type "tiles"
+  } else {
+    set type "coord"
+  }
+  foreach item {xmine xmaxe ymine ymaxe} {
+    set widget .$type.$item
+    set value [$widget get]
+    validate_$type $widget $value
+  }
+}
+
+bind .xyrange_values <<ComboboxSelected>> switch_xyrange
+switch_xyrange
+
+# Validate tile numbers
+
+foreach item {xmine xmaxe ymine ymaxe} {
+  .tiles.$item configure -validate key -vcmd "validate_tiles %W %P"
+}
+
+proc validate_tiles {widget tile} {
+  if {[$widget cget -state] == "readonly"} {return 1}
+  set tile [string trim $tile]
+  set suffix [lindex [split $widget "."] end]
+  set xy [string range $suffix 0 0]
+  set minmax [string range $suffix 1 3]
+  regsub -- {tiles} $widget {coord} coord_widget
+  set variable [$coord_widget cget -textvariable]
+  if {$xy == "y"} {
+    if {$minmax == "min"} {
+      regsub -- {min} $variable {max} variable
+    } else {
+      regsub -- {max} $variable {min} variable
+    }
+  }
+  if {$tile == ""} {
+    set ::$variable ""
+    return 1
+  }
+  if {![string is integer $tile]} {return 0}
+  set max [expr 1<<${::zoom.level}]
+  if {$tile < 0} {return 0}
+  if {$tile >= $max} {return 0}
+  if {$minmax == "max"} {incr tile]}
+  set max [expr double($max)]
+  if {$xy == "x"} {
+    set value [expr $tile/$max*360.-180.]
+  } else {
+    set pi 3.1415926535897931
+    set value [expr atan(sinh($pi*(1.-2.*$tile/$max)))]
+    set value [expr $value*180./$pi]
+  }
+  set ::$variable [format "%+.7f" $value]
+  return 1
+}
+
+# Validate coordinates
+
+foreach item {xmine xmaxe ymine ymaxe} {
+  .coord.$item configure -validate key -vcmd "validate_coord %W %P"
+}
+
+proc validate_coord {widget coord} {
+  if {[$widget cget -state] == "readonly"} {return 1}
+  set coord [string trim $coord]
+  set suffix [lindex [split $widget "."] end]
+  set xy [string range $suffix 0 0]
+  set minmax [string range $suffix 1 3]
+  regsub -- {coord} $widget {tiles} tiles_widget
+  set variable [$tiles_widget cget -textvariable]
+  if {$xy == "y"} {
+    if {$minmax == "min"} {
+      regsub -- {min} $variable {max} variable
+    } else {
+      regsub -- {max} $variable {min} variable
+    }
+  }
+  if {$coord == "" || $coord == "+" || $coord == "-"} {
+    set ::$variable ""
+    return 1
+  }
+  if {![string is double $coord]} {return 0}
+  if {$xy == "x"} {
+    set limit 180.
+  } else {
+    set limit 85.0511288
+  }
+  if {$coord < -$limit} {return 0}
+  if {$coord > +$limit} {return 0}
+  set max [expr double(1<<${::zoom.level})]
+  if {$xy == "x"} {
+    set value [expr ($coord+180.)/360.*$max]
+  } else {
+    set pi 3.1415926535897931
+    set coord [expr $coord*$pi/180.]
+    set value [expr (1.-(log(tan($coord)+1./cos($coord))/$pi))/2.*$max]
+  }
+  set ::$variable [expr int(min($value,$max-1))]
+  return 1
+}
+
+# Recalculate tile numbers or coordinate values
+
+scale_zoom ${zoom.level}
+
+# Choose folder for tiles and composed image
+
+if {![file isdirectory ${tiles.folder}]} {set tiles.folder $cwd}
+labelframe .tiles_folder -labelanchor nw -text [mc l31]:
+pack .tiles_folder -in .r -fill x -expand 1 -pady 1
+entry .tiles_folder_value -textvariable tiles.folder \
+	-relief sunken -bd 1 -takefocus 0 -state readonly
+button .tiles_folder_button -image $arrow_down -command choose_tiles_folder
+pack .tiles_folder_button -in .tiles_folder -side right -fill y -padx {3 0}
+pack .tiles_folder_value -in .tiles_folder -side left -fill x -expand 1
+
+proc choose_tiles_folder {} {
+  set folder [tk_chooseDirectory -parent . -initialdir ${::tiles.folder} \
+	-title "$::title - [mc l32]"]
+  if {$folder != ""} {
+    if {![file isdirectory $folder]} {catch "file mkdir $folder"}
+    if { [file isdirectory $folder]} {set ::tiles.folder $folder}
+  }
+}
+
+# Filename prefix
+
+labelframe .tiles_prefix -labelanchor w -text [mc l33]:
+pack .tiles_prefix -in .r -expand 1 -fill x -pady {2 1}
+entry .tiles_prefix_value -textvariable tiles.prefix -width 25 -justify left
+pack .tiles_prefix_value -in .tiles_prefix -side right
+
+.tiles_prefix_value configure -validate key -vcmd {
+  if {%d < 1} {return 1}
+  return [regexp {^(\w+[-.]?)*$} %P]
+}
+
+# Use "curl" for download
+
+checkbutton .use_curl -text [mc c30] -variable use.curl
+pack .use_curl -in .r -expand 1 -fill x
+if {$curl == ""} {
+  set use.curl 0
+  .use_curl configure -state disabled
+  tooltip .use_curl [mc c30t]
+}
+
+# Use GraphicsMagick or ImageMagick for composition
+
+radiobutton .use_gmagick -text [mc c32 GraphicsMagick] -anchor w \
+	-variable use.magick -value "gm"
+radiobutton .use_imagick -text [mc c32 ImageMagick] -anchor w \
+	-variable use.magick -value "magick"
+pack .use_gmagick .use_imagick -in .r -expand 1 -fill x
+
+if {$gm == ""} {
+  set use.magick "magick"
+  .use_gmagick configure -state disabled
+  tooltip .use_gmagick [mc c32t GraphicsMagick]
+}
+if {$magick == ""} {
+  set use.magick "gm"
+  .use_imagick configure -state disabled
+  tooltip .use_imagick [mc c32t ImageMagick]
+}
+
+# Compose tiles
+
+checkbutton .tiles_compose -text [mc c33] \
+	-variable tiles.compose -command tiles_compose_onoff
+pack .tiles_compose -in .r -expand 1 -fill x
+
+# Container for "Compose tiles" dependent widgets
+
+frame .tiles_compose_onoff
+proc tiles_compose_onoff {} {
+  if {${::tiles.compose}} {
+    pack .tiles_compose_onoff -in .r -after .tiles_compose \
+	-expand 1 -fill x
+  } else {
+    pack forget .tiles_compose_onoff
+  }
+}
+tiles_compose_onoff
+
+# Keep tiles after composing to image
+
+checkbutton .tiles_keep -text [mc c34] -variable tiles.keep
+pack .tiles_keep -in .tiles_compose_onoff -expand 1 -fill x
+
+# Show composed image
+
+checkbutton .show_composed -text [mc c35] -variable composed.show
+pack .show_composed -in .tiles_compose_onoff -expand 1 -fill x
+
+# Action buttons
+
+frame .buttons
+button .buttons.continue -text [mc b01] -width 12 -command {set action 1}
+button .buttons.cancel -text [mc b02] -width 12 -command {set action 0}
+pack .buttons.continue .buttons.cancel -side left
+pack .buttons -after .r -anchor n -ipady 5
+
+focus .buttons.continue
+
+proc busy_state {state} {
+  set busy {.l .r .buttons.continue .overlays .shading .effects .server}
+  if {$state} {
+    foreach item $busy {tk busy hold $item}
+    .buttons.continue configure -relief sunken
+    .buttons.cancel configure -text [mc b03] -command {set cancel 1}
+  } else {
+    .buttons.continue configure -relief raised
+    .buttons.cancel configure -text [mc b02] -command {set action 0}
+    foreach item $busy {tk busy forget $item}
+  }
+  update idletasks
+}
+
+# Show/hide output console window (show with saved geometry)
+
+checkbutton .output -text [mc c99] \
+	-variable console.show -command show_hide_console
+
+proc show_hide_console {} {
+  if {${::console.show}} {
+    .console.txt see end
+    if {${::console.geometry} == ""} {
+      wm deiconify .console
+    } else {
+      lassign ${::console.geometry} x y cols rows
+      wm positionfrom .console program
+      wm geometry .console ${cols}x${rows}+$x+$y
+      wm deiconify .console
+      wm geometry .console +$x+$y
+    }
+    if {[winfo ismapped .]} {raise . .console}
+  } else {
+    wm withdraw .console
+  }
+}
+
+if {$console != -1} {
+  pack .output -after .buttons -anchor n -expand 1 -fill x
+  show_hide_console
+
+  wm protocol .console WM_DELETE_WINDOW ".output invoke"
+  # Map/Unmap events are generated by Windows only!
+  bind .console <Unmap> {if {"%W" == [winfo toplevel %W]} {.output deselect}}
+  bind .console <Map>   {if {"%W" == [winfo toplevel %W]} {.output   select}}
+}
+
+# Filler down to bottom right
+
+proc filler_width_right {} {
+  set width 0
+  foreach item {.use_curl .use_gmagick .use_imagick \
+	.tiles_compose .tiles_keep .show_composed} {
+    set width [expr max($width,[winfo reqwidth $item])]
+  }
+  return $width
+}
+
+frame .fill_r -width [filler_width_right]
+pack .fill_r -in .r -fill y
+
+# --- End of main window right column
+
 # Create toplevel windows for
 # - overlays selection
 # - hillshading settings
 # - visual rendering effects
 # - server settings
 
-foreach toplevel {.overlays .shading .effects .server} {
-  set parent ${toplevel}_show_hide
-  toplevel $toplevel -bd 5
-  wm withdraw $toplevel
-  wm title $toplevel [$parent cget -text]
-  wm protocol $toplevel WM_DELETE_WINDOW "$parent invoke"
-  wm resizable $toplevel 0 0
-  wm positionfrom $toplevel program
-  if {[tk windowingsystem] == "x11"} {wm attributes $toplevel -type dialog}
+foreach widget {.overlays .shading .effects .server} {
+  set parent ${widget}_show_hide
+  toplevel $widget -bd 5
+  wm withdraw $widget
+  wm title $widget [$parent cget -text]
+  wm protocol $widget WM_DELETE_WINDOW "$parent invoke"
+  wm resizable $widget 0 0
+  wm positionfrom $widget program
+  if {[tk windowingsystem] == "x11"} {wm attributes $widget -type dialog}
 
-  bind $toplevel <Double-ButtonRelease-3> "$parent invoke"
-  bind $toplevel <Control-plus>  {incr_font_size +1}
-  bind $toplevel <Control-minus> {incr_font_size -1}
-  bind $toplevel <Control-KP_Add>      {incr_font_size +1}
-  bind $toplevel <Control-KP_Subtract> {incr_font_size -1}
+  bind $widget <Double-ButtonRelease-3> "$parent invoke"
 }
 
 # Show/hide toplevel window
 
-proc show_hide_toplevel_window {toplevel} {
-  set onoff [set ::[${toplevel}_show_hide cget -variable]]
+proc show_hide_toplevel_window {widget} {
+  set onoff [set ::[${widget}_show_hide cget -variable]]
   if {$onoff} {
-    position_toplevel_window $toplevel
-    scan [wm geometry $toplevel] "%*dx%*d+%d+%d" x y
-    wm transient $toplevel .
-    wm deiconify $toplevel
-    if {[tk windowingsystem] == "x11"} {wm geometry $toplevel +$x+$y}
+    position_toplevel_window $widget
+    scan [wm geometry $widget] "%*dx%*d+%d+%d" x y
+    wm transient $widget .
+    wm deiconify $widget
+    if {[tk windowingsystem] == "x11"} {wm geometry $widget +$x+$y}
   } else {
-    scan [wm geometry $toplevel] "%*dx%*d+%d+%d" x y
-    set ::{$toplevel.dx} [expr $x - [set ::{$toplevel.x}]]
-    set ::{$toplevel.dy} [expr $y - [set ::{$toplevel.y}]]
-    wm withdraw $toplevel
+    scan [wm geometry $widget] "%*dx%*d+%d+%d" x y
+    set ::{$widget.dx} [expr $x - [set ::{$widget.x}]]
+    set ::{$widget.dy} [expr $y - [set ::{$widget.y}]]
+    wm withdraw $widget
   }
 }
 
 # Position toplevel window right/left besides main window
 
-proc position_toplevel_window {toplevel} {
+proc position_toplevel_window {widget} {
   if {![winfo ismapped .]} {return}
   update idletasks
   scan [wm geometry .] "%dx%d+%d+%d" width height x y
@@ -759,7 +1145,7 @@ proc position_toplevel_window {toplevel} {
       set width $wmwidth
     }
   }
-  set reqwidth [winfo reqwidth $toplevel]
+  set reqwidth [winfo reqwidth $widget]
   set right [expr $x+$bdwidth+$width]
   set left  [expr $x-$bdwidth-$reqwidth]
   if {[expr $right+$reqwidth > [winfo vrootx .]+[winfo vrootwidth .]]} {
@@ -767,13 +1153,27 @@ proc position_toplevel_window {toplevel} {
   } else {
     set x $right
   }
-  set ::{$toplevel.x} $x
-  set ::{$toplevel.y} $y
-  if {[info exists ::{$toplevel.dx}]} {
-    incr x [set ::{$toplevel.dx}]
-    incr y [set ::{$toplevel.dy}]
+  set ::{$widget.x} $x
+  set ::{$widget.y} $y
+  if {[info exists ::{$widget.dx}]} {
+    incr x [set ::{$widget.dx}]
+    incr y [set ::{$widget.dy}]
   }
-  wm geometry $toplevel +$x+$y
+  wm geometry $widget +$x+$y
+}
+
+# Global toplevel bindings
+
+foreach widget {. .overlays .shading .effects .server} {
+  set focus$widget ""
+  bind $widget <Leave> {if {"%W" == [winfo toplevel %W]} \
+	{set focus%W [focus -displayof %W]}}
+  bind $widget <Enter> {if {"%W" == [winfo toplevel %W]} \
+	{catch "focus ${focus%W}"}}
+  bind $widget <Control-plus>  {incr_font_size +1}
+  bind $widget <Control-minus> {incr_font_size -1}
+  bind $widget <Control-KP_Add>      {incr_font_size +1}
+  bind $widget <Control-KP_Subtract> {incr_font_size -1}
 }
 
 # --- Begin of hillshading
@@ -878,43 +1278,15 @@ pack .shading.reset -pady {2 0}
 proc reset_shading_values {} {
   foreach widget {.shading.simple_value1 .shading.simple_value2 \
 	          .shading.diffuselight_value .shading.magnitude_value} {
-    $widget delete 0 end
-    $widget insert 0 [lindex [set ::$widget.minmax] 2]
+    set ::[$widget cget -textvariable] [lindex [set ::$widget.minmax] 2]
   }
-}
-
-# Validate hillshading algorithm parameters
-
-proc validate_float_minmax {widget} {
-  set value [$widget get]
-  if {[regexp {^(\d+\.?\d*|\d*\.?\d+)$} $value]} {
-    set valid 1
-    lassign [set ::$widget.minmax] min max
-    set test [regsub {([+-]?)0*([0-9]+.*)} $value {\1\2}]
-    if {$min != "" && [expr $test < $min]} {set valid 0}
-    if {$max != "" && [expr $test > $max]} {set valid 0}
-  } else {
-    set valid 0
-  }
-  if {!$valid} {set value [set ::$widget.previous]}
-  $widget delete 0 end
-  $widget insert 0 $value
-}
-
-proc validate_float_unsigned {value} {
-  if {$value == "" || $value == "."} {return 1}
-  return [regexp {^(\d+\.?\d*|\d*\.?\d+)$} $value]
 }
 
 foreach widget {.shading.simple_value1 .shading.simple_value2 \
 	        .shading.diffuselight_value .shading.magnitude_value} {
-  $widget configure -validate key -vcmd "validate_float_unsigned %P"
-  bind $widget <Enter> {set ::%W.previous [%W get]}
-  bind $widget <Leave> {after idle "validate_float_minmax %W"}
-  bind $widget <FocusIn>  {set ::%W.previous [%W get]}
-  bind $widget <FocusOut> {after idle "validate_float_minmax %W"}
+  $widget configure -validate all -vcmd {validate_number %W %V %P " " "float"}
   bind $widget <Shift-ButtonRelease-1> \
-	{%W delete 0 end;%W insert 0 [lindex ${::%W.minmax} 2]}
+	{set [%W cget -textvariable] [lindex ${::%W.minmax} 2]}
 }
 
 # Save hillshading settings to folder ini_folder
@@ -1088,7 +1460,7 @@ pack .server.interface -expand 1 -fill x -pady {6 1}
 pack .server.interface_values -in .server.interface \
 	-side right -anchor e -expand 1 -padx {3 0}
 
-# Server TCP port number
+# Tile server TCP port number
 
 labelframe .server.port -labelanchor w -text [mc x15]:
 entry .server.port_value -textvariable tcp.port \
@@ -1141,46 +1513,18 @@ pack .server.reset -pady {2 0}
 
 proc reset_server_values {} {
   foreach widget {.server.port_value .server.maxconn_value \
-	        .server.threadsmin_value .server.threadsmax_value} {
-    $widget delete 0 end
-    $widget insert 0 [lindex [set ::$widget.minmax] 2]
+	.server.threadsmin_value .server.threadsmax_value} {
+    set ::[$widget cget -textvariable] [lindex [set ::$widget.minmax] 2]
   }
   .server.engine_values current 0
   .server.interface_values set $::interface
 }
 
-# Validate server settings
-
-proc validate_number_minmax {widget} {
-  set value [$widget get]
-  if {[regexp {^(\d+)$} $value]} {
-    set valid 1
-    lassign [set ::$widget.minmax] min max
-    set test [regsub {([+-]?)0*([0-9]+.*)} $value {\1\2}]
-    if {$min != "" && [expr $test < $min]} {set valid 0}
-    if {$max != "" && [expr $test > $max]} {set valid 0}
-  } else {
-    set valid 0
-  }
-  if {!$valid} {set value [set ::$widget.previous]}
-  $widget delete 0 end
-  $widget insert 0 $value
-}
-
-proc validate_number_unsigned {value} {
-  if {$value == ""} {return 1}
-  return [regexp {^(\d+)$} $value]
-}
-
 foreach widget {.server.port_value .server.maxconn_value \
-	        .server.threadsmin_value .server.threadsmax_value} {
-  $widget configure -validate key -vcmd "validate_number_unsigned %P"
-  bind $widget <Enter> {set ::%W.previous [%W get]}
-  bind $widget <Leave> {after idle "validate_number_minmax %W"}
-  bind $widget <FocusIn>  {set ::%W.previous [%W get]}
-  bind $widget <FocusOut> {after idle "validate_number_minmax %W"}
+	.server.threadsmin_value .server.threadsmax_value} {
+  $widget configure -validate all -vcmd {validate_number %W %V %P " " "int"}
   bind $widget <Shift-ButtonRelease-1> \
-	{%W delete 0 end;%W insert 0 [lindex ${::%W.minmax} 2]}
+	{set [%W cget -textvariable] [lindex ${::%W.minmax} 2]}
 }
 
 # --- End of server settings
@@ -1546,8 +1890,6 @@ event generate .themes_values <<ComboboxSelected>>
 # Save global settings to folder ini_folder
 
 proc save_global_settings {} {uplevel #0 {
-  set maps.selection [lmap index [.maps_values curselection] \
-	{.maps_values get $index}]
   scan [wm geometry .] "%dx%d+%d+%d" width height x y
   set window.geometry "$x $y $width $height"
   set font.size [font configure TkDefaultFont -size]
@@ -1582,389 +1924,34 @@ proc save_tiles_settings {} {uplevel #0 {
   close $fd
 }}
 
-# Menu columns separator
+# Validate signed/unsigned int/float number value
 
-frame .m -width 2 -bd 2 -relief sunken
-pack .m -side left -expand 1 -fill y -padx 5
-
-# --- Begin of main window right column
-
-# Right menu column
-
-frame .r
-pack .r -anchor n
-
-# X and Y range
-
-labelframe .xyrange -labelanchor w -text [mc l21]:
-pack .xyrange -in .r -expand 1 -fill x -pady 1
-combobox .xyrange_values -width 18 -values [list [mc v22] [mc v23]] \
-	-validate key -validatecommand {return 0}
-if {[info exists xyrange.mode]} {.xyrange_values current ${::xyrange.mode}}
-if {[.xyrange_values current] < 0} {.xyrange_values current 0}
-pack .xyrange_values -in .xyrange -side right -anchor e -expand 1
-
-proc switch_xyrange {} {
-  set range [.xyrange_values current]
-  if {$range == 0} {
-    set w tiles
-    set r coord
-  } else {
-    set r tiles
-    set w coord
-  }
-  foreach item {xmine xmaxe ymine ymaxe} {
-    .${w}.$item configure -takefocus 1 -state normal
-    .${r}.$item configure -takefocus 0 -state readonly
-  }
-}
-
-# Tiles
-
-labelframe .tiles -labelanchor nw -text [mc l22]:
-pack .tiles -in .r -fill x
-
-# Coordinates
-
-labelframe .coord -labelanchor nw -text [mc l23]:
-pack .coord -in .r -fill x
-
-# Common widgets for tiles/coordinates
-
-foreach item {tiles coord} {
-  set widget .${item}
-  label $widget.xminl -text "X min"
-  entry $widget.xmine -textvariable ${item}.xmin -justify right -width 12
-  label $widget.xmaxl -text "X max"
-  entry $widget.xmaxe -textvariable ${item}.xmax -justify right -width 12
-  grid $widget.xminl -in $widget -row 1 -column 1 -sticky w
-  grid $widget.xmine -in $widget -row 1 -column 2 -sticky w
-  grid $widget.xmaxl -in $widget -row 1 -column 3 -sticky e
-  grid $widget.xmaxe -in $widget -row 1 -column 4 -sticky e
-  label $widget.yminl -text "Y min"
-  entry $widget.ymine -textvariable ${item}.ymin -justify right -width 12
-  label $widget.ymaxl -text "Y max"
-  entry $widget.ymaxe -textvariable ${item}.ymax -justify right -width 12
-  grid $widget.yminl -in $widget -row 2 -column 1 -sticky w
-  grid $widget.ymine -in $widget -row 2 -column 2 -sticky w
-  grid $widget.ymaxl -in $widget -row 2 -column 3 -sticky e
-  grid $widget.ymaxe -in $widget -row 2 -column 4 -sticky e
-  grid columnconfigure $widget {1 3} -weight 1
-  grid columnconfigure $widget {2 4} -weight 1
-}
-
-# Zoom level
-
-labelframe .zoom -labelanchor w -text [mc l24]:
-pack .zoom -in .r -fill x -expand 1 -pady 1
-scale .zoom_scale -from $min_zoom_level -to $max_zoom_level -resolution 1 \
-	-orient horizontal -variable zoom.level -command scale_zoom
-label .zoom_value -anchor center -textvariable zoom.level -width 4 \
-	-relief sunken
-pack .zoom_value -in .zoom -side right
-pack .zoom_scale -in .zoom -side left -fill x -expand 1
-
-proc scale_zoom {zoom} {
-  set tmax [expr (1<<$zoom)-1]
-  set xmax 180
-  set ymax 85.0511
-  set tiles_xmin "X min \u2265 0 ([mc t21 0 $xmax°])"
-  set tiles_xmax "X max \u2264 $tmax ([mc t22 $tmax $xmax°])"
-  set tiles_ymin "Y min \u2265 0 ([mc t23 0 $ymax°])"
-  set tiles_ymax "Y max \u2264 $tmax ([mc t24 $tmax $ymax°])"
-  set coord_xmin "X min \u2265 -$xmax ([mc t21 0 $xmax°])"
-  set coord_xmax "X max \u2264 +$xmax ([mc t22 $tmax $xmax°])"
-  set coord_ymin "Y min \u2265 -$ymax ([mc t24 $tmax $ymax°])"
-  set coord_ymax "Y max \u2264 +$ymax ([mc t23 0 $ymax°])"
-  foreach item {tiles coord} {
-    set widget .${item}
-    eval tooltip $widget.xmine "\$${item}_xmin"
-    eval tooltip $widget.xmaxe "\$${item}_xmax"
-    eval tooltip $widget.ymine "\$${item}_ymin"
-    eval tooltip $widget.ymaxe "\$${item}_ymax"
-  }
-  set count [expr $tmax+1]
-  tooltip .zoom_scale "[mc t25 $tmax $count $count]"
-
-  # Shrink tiles range to valid range
-  while {1} {
-    set valid 1
-    foreach item {xmin xmax ymin ymax} {
-      if {[set ::tiles.$item] > $tmax} {set valid 0}
-    }
-    if {$valid} {break}
-    foreach item {xmin xmax ymin ymax} {
-      set ::tiles.$item [expr [set ::tiles.$item]>>1]
-    }
-  }
-
-  # Recalculate tile numbers or coordinate values
-  if {[.xyrange_values current] == 0} {
-    set type "tiles"
-  } else {
-    set type "coord"
-  }
-  foreach item {xmine xmaxe ymine ymaxe} {
-    set widget .$type.$item
-    set value [$widget get]
-    validate_$type $widget $value
-  }
-}
-
-bind .xyrange_values <<ComboboxSelected>> switch_xyrange
-switch_xyrange
-
-# Validate tile numbers
-
-foreach item {xmine xmaxe ymine ymaxe} {
-  .tiles.$item configure -validate key -vcmd "validate_tiles %W %P"
-}
-
-proc validate_tiles {widget tile} {
-  if {[$widget cget -state] == "readonly"} {return 1}
-  set tile [string trim $tile]
-  set suffix [lindex [split $widget "."] end]
-  set xy [string range $suffix 0 0]
-  set minmax [string range $suffix 1 3]
-  regsub -- {tiles} $widget {coord} coord_widget
-  set variable [$coord_widget cget -textvariable]
-  if {$xy == "y"} {
-    if {$minmax == "min"} {
-      regsub -- {min} $variable {max} variable
+proc validate_number {widget event value sign number} {
+  set name ::[$widget cget -textvariable]
+  set value [string trim $value]
+  set sign "\[$sign\]?";	# sign: " ", "+", "-", "+-"
+  set int   {\d+}
+  set float {(\d+\.?\d*|\d*\.?\d+)}
+  set number [set $number];	# number: "int", "float"
+  if {$event == "key"} {
+    return [regexp "^($sign|$sign$number)$" $value];
+  } elseif {$event == "focusin"} {
+    set $name.prev $value
+  } elseif {$event == "focusout"} {
+    set prev [set $name.prev]
+    if {[regexp "^$sign$number$" $value]} {
+      if {![info exists ::$widget.minmax]} {return 1}
+      lassign [set ::$widget.minmax] min max
+      set test [regsub {([+-]?)0*([0-9]+.*)} $value {\1\2}]
+      if {$min != "" && [expr $test < $min]} {set $name $prev}
+      if {$max != "" && [expr $test > $max]} {set $name $prev}
     } else {
-      regsub -- {max} $variable {min} variable
+      set $name $prev
     }
+    after idle "$widget config -validate all"
   }
-  if {$tile == ""} {
-    set ::$variable ""
-    return 1
-  }
-  if {![string is integer $tile]} {return 0}
-  set max [expr 1<<${::zoom.level}]
-  if {$tile < 0} {return 0}
-  if {$tile >= $max} {return 0}
-  if {$minmax == "max"} {incr tile]}
-  set max [expr double($max)]
-  if {$xy == "x"} {
-    set value [expr $tile/$max*360.-180.]
-  } else {
-    set pi 3.1415926535897931
-    set value [expr atan(sinh($pi*(1.-2.*$tile/$max)))]
-    set value [expr $value*180./$pi]
-  }
-  set ::$variable [format "%+.7f" $value]
   return 1
 }
-
-# Validate coordinates
-
-foreach item {xmine xmaxe ymine ymaxe} {
-  .coord.$item configure -validate key -vcmd "validate_coord %W %P"
-}
-
-proc validate_coord {widget coord} {
-  if {[$widget cget -state] == "readonly"} {return 1}
-  set coord [string trim $coord]
-  set suffix [lindex [split $widget "."] end]
-  set xy [string range $suffix 0 0]
-  set minmax [string range $suffix 1 3]
-  regsub -- {coord} $widget {tiles} tiles_widget
-  set variable [$tiles_widget cget -textvariable]
-  if {$xy == "y"} {
-    if {$minmax == "min"} {
-      regsub -- {min} $variable {max} variable
-    } else {
-      regsub -- {max} $variable {min} variable
-    }
-  }
-  if {$coord == "" || $coord == "+" || $coord == "-"} {
-    set ::$variable ""
-    return 1
-  }
-  if {![string is double $coord]} {return 0}
-  if {$xy == "x"} {
-    set limit 180.
-  } else {
-    set limit 85.0511288
-  }
-  if {$coord < -$limit} {return 0}
-  if {$coord > +$limit} {return 0}
-  set max [expr double(1<<${::zoom.level})]
-  if {$xy == "x"} {
-    set value [expr ($coord+180.)/360.*$max]
-  } else {
-    set pi 3.1415926535897931
-    set coord [expr $coord*$pi/180.]
-    set value [expr (1.-(log(tan($coord)+1./cos($coord))/$pi))/2.*$max]
-  }
-  set ::$variable [expr int(min($value,$max-1))]
-  return 1
-}
-
-# Recalculate tile numbers or coordinate values
-
-scale_zoom ${zoom.level}
-
-# Choose folder for tiles and composed image
-
-if {![file isdirectory ${tiles.folder}]} {set tiles.folder $cwd}
-labelframe .tiles_folder -labelanchor nw -text [mc l31]:
-pack .tiles_folder -in .r -fill x -expand 1 -pady 1
-entry .tiles_folder_value -textvariable tiles.folder \
-	-relief sunken -bd 1 -takefocus 0 -state readonly
-button .tiles_folder_button -image $arrow_down -command choose_tiles_folder
-pack .tiles_folder_button -in .tiles_folder -side right -fill y -padx {3 0}
-pack .tiles_folder_value -in .tiles_folder -side left -fill x -expand 1
-
-proc choose_tiles_folder {} {
-  set folder [tk_chooseDirectory -parent . -initialdir ${::tiles.folder} \
-	-title "$::title - [mc l32]"]
-  if {$folder != ""} {
-    if {![file isdirectory $folder]} {catch "file mkdir $folder"}
-    if { [file isdirectory $folder]} {set ::tiles.folder $folder}
-  }
-}
-
-# Filename prefix
-
-labelframe .tiles_prefix -labelanchor w -text [mc l33]:
-pack .tiles_prefix -in .r -expand 1 -fill x -pady {2 1}
-entry .tiles_prefix_value -textvariable tiles.prefix -width 25 -justify left
-pack .tiles_prefix_value -in .tiles_prefix -side right
-
-.tiles_prefix_value configure -validate key -vcmd {
-  if {%d < 1} {return 1}
-  return [regexp {^(\w+[-.]?)*$} %P]
-}
-
-# Use "curl" for download
-
-checkbutton .use_curl -text [mc c30] -variable use.curl
-pack .use_curl -in .r -expand 1 -fill x
-if {$curl == ""} {
-  set use.curl 0
-  .use_curl configure -state disabled
-  tooltip .use_curl [mc c30t]
-}
-
-# Use GraphicsMagick or ImageMagick for composition
-
-radiobutton .use_gmagick -text [mc c32 GraphicsMagick] -anchor w \
-	-variable use.magick -value "gm"
-radiobutton .use_imagick -text [mc c32 ImageMagick] -anchor w \
-	-variable use.magick -value "magick"
-pack .use_gmagick .use_imagick -in .r -expand 1 -fill x
-
-if {$gm == ""} {
-  set use.magick "magick"
-  .use_gmagick configure -state disabled
-  tooltip .use_gmagick [mc c32t GraphicsMagick]
-}
-if {$magick == ""} {
-  set use.magick "gm"
-  .use_imagick configure -state disabled
-  tooltip .use_imagick [mc c32t ImageMagick]
-}
-
-# Compose tiles
-
-checkbutton .tiles_compose -text [mc c33] \
-	-variable tiles.compose -command tiles_compose_onoff
-pack .tiles_compose -in .r -expand 1 -fill x
-
-# Container for "Compose tiles" dependent widgets
-
-frame .tiles_compose_onoff
-proc tiles_compose_onoff {} {
-  if {${::tiles.compose}} {
-    pack .tiles_compose_onoff -in .r -after .tiles_compose \
-	-expand 1 -fill x
-  } else {
-    pack forget .tiles_compose_onoff
-  }
-}
-tiles_compose_onoff
-
-# Keep tiles after composing to image
-
-checkbutton .tiles_keep -text [mc c34] -variable tiles.keep
-pack .tiles_keep -in .tiles_compose_onoff -expand 1 -fill x
-
-# Show composed image
-
-checkbutton .show_composed -text [mc c35] -variable composed.show
-pack .show_composed -in .tiles_compose_onoff -expand 1 -fill x
-
-# Action buttons
-
-frame .buttons
-button .buttons.continue -text [mc b01] -width 12 -command {set action 1}
-button .buttons.cancel -text [mc b02] -width 12 -command {set action 0}
-pack .buttons.continue .buttons.cancel -side left
-pack .buttons -after .r -anchor n -ipady 5
-
-proc busy_state {state} {
-  set busy {.l .r .buttons.continue .overlays .shading .effects .server}
-  if {$state} {
-    foreach item $busy {tk busy hold $item}
-    .buttons.continue configure -relief sunken
-    .buttons.cancel configure -text [mc b03] -command cancel_render_job
-  } else {
-    .buttons.continue configure -relief raised
-    .buttons.cancel configure -text [mc b02] -command {set action 0}
-    foreach item $busy {tk busy forget $item}
-  }
-  update idletasks
-}
-
-# Show/hide output console window (show with saved geometry)
-
-checkbutton .output -text [mc c99] \
-	-variable console.show -command show_hide_console
-
-proc show_hide_console {} {
-  if {${::console.show}} {
-    .console.txt see end
-    if {${::console.geometry} == ""} {
-      wm deiconify .console
-    } else {
-      lassign ${::console.geometry} x y cols rows
-      wm positionfrom .console program
-      wm geometry .console ${cols}x${rows}+$x+$y
-      wm deiconify .console
-      wm geometry .console +$x+$y
-    }
-    if {[winfo ismapped .]} {raise . .console}
-  } else {
-    wm withdraw .console
-  }
-}
-
-if {$console != -1} {
-  pack .output -after .buttons -anchor n -expand 1 -fill x
-  show_hide_console
-
-  wm protocol .console WM_DELETE_WINDOW ".output invoke"
-  # Map/Unmap events are generated by Windows only!
-  bind .console <Unmap> {if {"%W" == [winfo toplevel "%W"]} {.output deselect}}
-  bind .console <Map>   {if {"%W" == [winfo toplevel "%W"]} {.output   select}}
-}
-
-# Filler down to bottom right
-
-proc filler_width_right {} {
-  set width 0
-  foreach item {.use_curl .use_gmagick .use_imagick \
-	.tiles_compose .tiles_keep .show_composed} {
-    set width [expr max($width,[winfo reqwidth $item])]
-  }
-  return $width
-}
-
-frame .fill_r -width [filler_width_right]
-pack .fill_r -in .r -fill y
-
-# --- End of main window right column
 
 # Increase/decrease font size
 
@@ -1990,23 +1977,10 @@ proc incr_font_size {incr} {
   .fill_r configure -width [filler_width_right]
 }
 
-# Show main window (at saved position)
-
-update
-wm positionfrom . program
-if {[info exists window.geometry]} {
-  lassign ${window.geometry} x y width height
-  # Adjust horizontal position if necessary
-  set x [expr max($x,[winfo vrootx .])]
-  set x [expr min($x,[winfo vrootx .]+[winfo vrootwidth .]-$width)]
-  wm geometry . +$x+$y
-}
-wm deiconify .
-
 # Check selection for completeness
 
 proc selection_ok {} {
-  if {[llength [.maps_values curselection]] == 0} {
+  if {[llength ${::maps.selection}] == 0} {
     error_message [mc e41] return
     return 0
   }
@@ -2054,16 +2028,21 @@ proc process_start {command process} {
 
   set pid [pid $fd]
   set exe [file tail [lindex $command 0]]
-  puti "[mc m51 $pid $exe]"
 
-  append mark \$${process}::cr {\[} [string toupper $process] {\]}
+  set mark "\[[string toupper $process]\]"
+  puti "[mc m51 $pid $exe] $mark"
 
+  set cr "\$${process}::cr"
   fileevent $fd readable "
-	while {\[gets $fd line\] >= 0} {puts \"$mark \$line\"};
+	while {\[gets $fd line\] >= 0} {
+	  if {\$cancel} {continue}
+	  puts \"$cr\\$mark \$line\"
+	}
 	if {\[eof $fd\]} {
-	  close $fd; namespace delete $process;
-	  puti \[mc m52 $pid $exe\];
-	  set $process.eof 1;
+	  close $fd
+	  namespace delete $process
+	  puti \"\[mc m52 $pid $exe\] \\$mark\"
+	  set $process.eof 1
 	}"
 
 }
@@ -2095,33 +2074,21 @@ proc process_running {process} {
 
 proc srv_start {srv} {
 
-  set shading ${::shading.onoff}
-  set name [set ::tms_name_$srv]
-  set port [set ::tcp.port]
+  # Map or hillshading?
 
+  set shading ${::shading.onoff}
   if {$srv == "srv"} {
     if {${::shading.layer} == "asmap"} {set shading 0}
-    append name " Tile Server \[SRV\]"
   } elseif {$srv == "ovl"} {
     if {!${::shading.onoff}} {return}
     if {${::shading.layer} == "onmap"} {return}
-    append name " Overlay Server \[OVL\]"
   }
 
-  # Server's TCP port already or still (after kill) in use?
-  set count 0
-  while {$count < 5} {
-    set rc [catch {socket -server {} -myaddr 127.0.0.1 $port} fd]
-    if {!$rc} {break}
-    incr count
-    after 200
-  }
-  if {$rc} {
-    error_message [mc m59 $name $port $fd] return
-    return
-  }
-  close $fd
-  update
+  # Compose command line
+
+  set port [set ::tcp.port]
+  set name [set ::tms_name_$srv]
+  append name " Server \[[string toupper $srv]\]"
 
   lappend command $::java_cmd -Xmx1G -Xms256M -Xmn256M
   if {[info exists ::java_args]} {lappend command {*}$::java_args}
@@ -2166,8 +2133,7 @@ proc srv_start {srv} {
   lappend command -if ${::tcp.interface} -p ${port}
 
   if {$srv == "srv"} {
-    set map_list [lmap index [.maps_values curselection] \
-	{set map $::maps_folder/[.maps_values get $index]}]
+    set map_list [lmap item ${::maps.selection} {set map $::maps_folder/$item}]
     lappend command -m [join $map_list ","]
     if {${::maps.world} == 1} {lappend command -wm}
     set theme [.themes_values get]
@@ -2220,6 +2186,24 @@ proc srv_start {srv} {
 
   if {$::server_version >= 1900} {lappend command -term}
 
+  # Server's TCP port is currently in use?
+
+  set count 0
+  while {$count < 5} {
+    set rc [catch {socket -server {} -myaddr 127.0.0.1 $port} fd]
+    if {!$rc} {break}
+    incr count
+    after 200
+  }
+  if {$rc} {
+    error_message [mc m59 $name $port $fd] return
+    return
+  }
+  close $fd
+  update
+
+  # Start server
+
   puti "[mc m54 $name] ..."
   puts "[get_shell_command $command]"
 
@@ -2267,37 +2251,46 @@ proc srv_stop {srv} {
 
 }
 
-# Cancel render job
+# Run command pipe
 
-proc cancel_render_job {} {
+proc pipe_run {exe args} {
+  lappend cmd $exe {*}$args
+  set exe [file tail $exe]
+  set rc [catch {open "| $cmd 2>@1" r} result]
+  if {$rc} {return [list $rc $result]}
 
-  set ::cancel 1
-  if {![info exists batch::pid]} {return}
-  set pid $batch::pid
+  set fd $result
+  fconfigure $fd -blocking 0 -buffering line
+  namespace eval pipe {}
+  set pipe::pid [pid $fd]
+  set pipe::cmd $cmd
+  fileevent $fd readable "
+    while {\[gets $fd line\] >= 0} {
+      if {\[info exists pipe::killed\]} {continue}
+      puts \"\\r> $exe \$line\"
+      if {\$cancel} {pipe_kill}
+    }
+    if {\[eof $fd\]} {
+      set pipe::rc \[catch {close $fd} pipe::result]
+    }"
+  vwait pipe::rc
+  set return [list $pipe::rc $pipe::result]
+  namespace delete pipe
+  return $return
+}
+
+# Kill command pipe
+
+proc pipe_kill {} {
+  set pid $pipe::pid
+  set cmd [file tail [lindex $pipe::cmd 0]]
   if {$::tcl_platform(os) == "Windows NT"} {
     catch {exec TASKKILL /F /PID $pid}
   } elseif {$::tcl_platform(os) == "Linux"} {
     catch {exec kill -SIGTERM $pid}
   }
-
-}
-
-# Run render job
-
-proc geturl_handler {file socket token} {
-
-  upvar #0 $token state
-  set size 0
-  if {[string first "image/" [set state(type)]] == 0} {
-    set fd [open $file w+]
-    fconfigure $fd -translation binary -buffering none
-    while {![eof $socket]} {incr size [chan copy $socket $fd]}
-    close $fd
-  } else {
-    while {![eof $socket]} {incr size [string length [read -nonewline $socket]]}
-  }
-  return $size
-
+  set pipe::killed 1
+  puts [mc m53 $pid $cmd]
 }
 
 # Download tiles with "curl"
@@ -2311,20 +2304,26 @@ proc download_with_curl {} {uplevel 1 {
 
   # Download tiles from server
 
-  set curl_args {}
-  lappend curl_args -qsvk --http1.1
-  lappend curl_args --retry 0
-  lappend curl_args --fail-early
-  if {$::curl_version >= 7066} \
-	{lappend curl_args --parallel --parallel-max 4}
-  lappend curl_args -o ${prefix}$zoom.#1.#2.$suffix
+  set curl_format "!"
+# append curl_format " curl_url {%{url}}"
+# append curl_format " curl_status %{response_code}"
+# append curl_format " curl_size %{size_download}"
+  append curl_format " curl_rc %{exitcode}"
+  append curl_format " curl_result {%{errormsg}}"
+  append curl_format "\n"
 
-  set cmd [list $::curl {*}$curl_args $url]
+  set curl_exec $::curl
+  lappend curl_exec -qsvkL --http1.1 --retry 0
+  lappend curl_exec --parallel --parallel-max 4
+  lappend curl_exec --output ${prefix}$zoom.#1.#2.$suffix
+  lappend curl_exec --write-out $curl_format
+  lappend curl_exec --stderr - --no-buffer
+  lappend curl_exec $url
 
   set count 0
   set valid 0
 
-  set rc [catch {open "| $cmd 2>@1" r} result]
+  set rc [catch {open "| $curl_exec" r} result]
   if {$rc} {
     error_message "Download $url:\n$result" return
     puts $fdlog [format $logfmt "URL" $url]
@@ -2335,19 +2334,29 @@ proc download_with_curl {} {uplevel 1 {
 
   set fd $result
   fconfigure $fd -blocking 0 -buffering line -translation binary
-  namespace eval batch {}
-  set batch::pid [pid $fd]
+  namespace eval pipe {}
+  set pipe::pid [pid $fd]
+  set pipe::cmd $curl_exec
   fileevent $fd readable "
-	while {\[gets $fd line\] >= 0} {
-	  puts $fdlog \[string trimright \$line \\r\];
-	  if {\$cancel} {break};
-	};
-	if {\[eof $fd\] || \$cancel} {
-	  set batch::rc \[catch {close $fd} batch::result];
-	}"
-  vwait batch::rc
-  lassign [list $batch::rc $batch::result] rc result
-  namespace delete batch
+    while {\[gets $fd line\] >= 0} {
+      if {\[info exists pipe::killed\]} {continue}
+      if {\[string range \$line 0 1\] != {! }} {
+	puts $fdlog \[string trimright \$line \\r\]
+      } else {
+	lmap {name value} \[string range \$line 2 end\] {set \$name \$value}
+	if {\$curl_rc != 0} {puts \"> curl error \$curl_rc: \$curl_result\"}
+      }
+      if {\$cancel} {pipe_kill}
+    };
+    if {\[eof $fd\]} {
+      close $fd
+      set pipe::rc \$curl_rc
+      set pipe::result \$curl_result
+    }"
+  vwait pipe::rc
+  lassign [list $pipe::rc $pipe::result] rc result
+  namespace delete pipe
+
   if {$rc || $::cancel} {return 1}
 
   # Count successfully downloded files
@@ -2369,6 +2378,22 @@ proc download_with_curl {} {uplevel 1 {
 
 # Download tiles with "http"
 
+proc http_geturl_handler {file socket token} {
+
+  upvar #0 $token state
+  set size 0
+  if {[string first "image/" [set state(type)]] == 0} {
+    set fd [open $file w+]
+    fconfigure $fd -translation binary -buffering none
+    while {![eof $socket]} {incr size [chan copy $socket $fd]}
+    close $fd
+  } else {
+    while {![eof $socket]} {incr size [string length [read -nonewline $socket]]}
+  }
+  return $size
+
+}
+
 proc download_with_http {} {uplevel 1 {
 
   set count 0
@@ -2387,7 +2412,7 @@ proc download_with_http {} {uplevel 1 {
       regsub "\\$?{z}" $url $zoom url
       set file $prefix$zoom.$xtile.$ytile.$suffix
       set rc [catch "::http::geturl $url -keepalive 1 \
-	-binary 1 -handler {geturl_handler $file}" result]
+	-binary 1 -handler {http_geturl_handler $file}" result]
       if {$rc} {
 	error_message "Download $url:\n$result" return
 	puts $fdlog [format $logfmt "URL" $url]
@@ -2426,6 +2451,8 @@ proc download_with_http {} {uplevel 1 {
   return 0
 
 }}
+
+# Run render job
 
 proc run_render_job {} {
 
@@ -2592,31 +2619,6 @@ proc run_render_job {} {
     set ::env(MAGICK_TEMPORARY_PATH) $folder
   }
 
-  # Batch processing
-
-  proc batch_proc {exe args} {
-    lappend cmd $exe {*}$args
-    set exe [file tail $exe]
-    set rc [catch {open "| $cmd" r} result]
-    if {$rc} {return [list $rc $result]}
-    set fd $result
-    fconfigure $fd -blocking 0 -buffering line
-    namespace eval batch {}
-    set batch::pid [pid $fd]
-    fileevent $fd readable "
-	while {\[gets $fd line\] >= 0} {
-	  puts \"\\r> $exe \$line\";
-	  if {\$cancel} {break};
-	};
-	if {\[eof $fd\] || \$cancel} {
-	  set batch::rc \[catch {close $fd} batch::result];
-	}"
-    vwait batch::rc
-    set return [list $batch::rc $batch::result]
-    namespace delete batch
-    return $return
-  }
-
   # Fill missing tiles by white tile
 
   set void [pid].void.png
@@ -2663,10 +2665,10 @@ proc run_render_job {} {
 
   set fderr [file tempfile]
   if {$use_magick == "gm"} {
-    lassign [batch_proc $exe batch -stop-on-error on -echo on - \
+    lassign [pipe_run $exe batch -stop-on-error on -echo on - \
 	<@ $fd 2>@ $fderr] rc result
   } elseif {$use_magick == "magick"} {
-    lassign [batch_proc $exe -script - \
+    lassign [pipe_run $exe -script - \
 	<@ $fd 2>@ $fderr] rc result
   }
   close $fd
@@ -2690,10 +2692,9 @@ proc run_render_job {} {
   }
 
   if {$::cancel} {
-    puts "[mc m74a $exe]"
     break
   } elseif {$rc} {
-    puts "[mc m74b $exe $result]"
+    puts "[mc m74 $exe $result]"
     break
   } else {
     set time [expr $stop-$start]
@@ -2733,7 +2734,7 @@ proc run_render_job {} {
   set args "montage -mode concatenate -tile ${xcount}x${ycount} @$batch_file $composed.png"
   puts "> [file tail $exe] $args"
   set fderr [file tempfile]
-  lassign [batch_proc $exe {*}$args 2>@ $fderr] rc result
+  lassign [pipe_run $exe {*}$args 2>@ $fderr] rc result
   seek $fderr 0
   set data [split [read -nonewline $fderr] \n]
   close $fderr
@@ -2755,10 +2756,9 @@ proc run_render_job {} {
   }
 
   if {$::cancel} {
-    puts "[mc m74a $exe]"
     break
   } elseif {$rc} {
-    puts "[mc m74b $exe $result]"
+    puts "[mc m74 $exe $result]"
     break
   } else {
     set time [expr $stop-$start]
@@ -2798,6 +2798,18 @@ proc run_render_job {} {
 
 }
 
+# Show main window (at saved position)
+
+wm positionfrom . program
+if {[info exists window.geometry]} {
+  lassign ${window.geometry} x y width height
+  # Adjust horizontal position if necessary
+  set x [expr max($x,[winfo vrootx .])]
+  set x [expr min($x,[winfo vrootx .]+[winfo vrootwidth .]-$width)]
+  wm geometry . +$x+$y
+}
+wm deiconify .
+
 # Wait for valid selection or finish
 
 while {1} {
@@ -2822,7 +2834,7 @@ busy_state 0
 update idletasks
 if {![info exists action]} {vwait action}
 
-# After changing settings: run render job
+# Restart tile server with new settings
 
 while {$action == 1} {
   unset action
