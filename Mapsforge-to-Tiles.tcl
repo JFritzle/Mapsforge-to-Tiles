@@ -391,9 +391,9 @@ if {!$rc} {
   set java_string $data
   if {[regsub {^1\.([1-9]+)\.[0-9]+.*$} $java_string {\1} data] > 0} {
     set java_version $data; # Oracle Java version <= 8
-  } elseif {[regsub {^([1-9][0-9]+)((\.[0-9]+)((\.[0-9]+)(\.[0-9]+)?)?)?$} \
-	$java_string {\1} data] > 0} {
-    set java_version $data; # Other Java versions >= 10
+  } elseif {[regsub {^([1-9][0-9]*)((\.0)*\.[1-9][0-9]*)*$} $java_string \
+	{\1} data] > 0} {
+    set java_version $data; # Other Java versions >= 9
   }
 }
 
