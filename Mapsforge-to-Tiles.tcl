@@ -389,10 +389,11 @@ if {!$rc} {
   set line [lindex [split $result "\n"] 0]
   regsub -nocase {^.* version "(.*)".*$} $line {\1} data
   set java_string $data
-  if {[regsub {1\.([1-9][0-9]*)\.[0-9]?.*} $data {\1} data] > 0} {
+  if {[regsub {^1\.([1-9]+)\.[0-9]+.*$} $java_string {\1} data] > 0} {
     set java_version $data; # Oracle Java version <= 8
-  } elseif {[regsub {([1-9][0-9]*)\.[0-9]?\.[0-9]?.*} $data {\1} data] > 0} {
-    set java_version $data; # Other Java versions
+  } elseif {[regsub {^([1-9][0-9]+)((\.[0-9]+)((\.[0-9]+)(\.[0-9]+)?)?)?$} \
+	$java_string {\1} data] > 0} {
+    set java_version $data; # Other Java versions >= 10
   }
 }
 
