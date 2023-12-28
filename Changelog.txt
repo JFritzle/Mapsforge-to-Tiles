@@ -1,3 +1,8 @@
+2023-12-28
+
+- README: Updated Tcl/Tk's download and installation recommendation 
+  for Windows due to teclab’s tcltk repository move
+
 2023-10-24
 
 - For Java version >= 9, accept Java version strings according to
