@@ -24,6 +24,9 @@ set script [file normalize [info script]]
 set cwd [pwd]
 encoding system utf-8
 
+if {$tcl_version <  9.0} {set home [file normalize ~]}
+if {$tcl_version >= 9.0} {set home [file tildeexpand ~]}
+
 wm withdraw .
 
 # Required packages and procedure aliases
@@ -107,6 +110,7 @@ foreach item $list {
   if {![info exists $item]} {continue}
   set value [set $item]
   if {$value == ""} {continue}
+  if {$tcl_version >= 9.0} {set value [file tildeexpand $value]}
   if {[lsearch -exact $cmds $item] != -1} {
     set exec [auto_execok $value]
     if {$exec != ""} {set value [lindex $exec 0]}
@@ -122,7 +126,7 @@ cd $cwd
 
 # Restore saved settings from folder ini_folder
 
-if {![info exists ini_folder]} {set ini_folder [file normalize ~/.Mapsforge]}
+if {![info exists ini_folder]} {set ini_folder $home/.Mapsforge}
 file mkdir $ini_folder
 
 set maps.selection {}
@@ -791,14 +795,14 @@ proc scale_zoom {zoom} {
   set tmax [expr (1<<$zoom)-1]
   set xmax 180
   set ymax 85.0511
-  set tiles_xmin "X min \u2265 0 ([mc t21 0 $xmax°])"
-  set tiles_xmax "X max \u2264 $tmax ([mc t22 $tmax $xmax°])"
-  set tiles_ymin "Y min \u2265 0 ([mc t23 0 $ymax°])"
-  set tiles_ymax "Y max \u2264 $tmax ([mc t24 $tmax $ymax°])"
-  set coord_xmin "X min \u2265 -$xmax ([mc t21 0 $xmax°])"
-  set coord_xmax "X max \u2264 +$xmax ([mc t22 $tmax $xmax°])"
-  set coord_ymin "Y min \u2265 -$ymax ([mc t24 $tmax $ymax°])"
-  set coord_ymax "Y max \u2264 +$ymax ([mc t23 0 $ymax°])"
+  set tiles_xmin "X min \u2265 0 ([mc t21 0 $xmaxÂ°])"
+  set tiles_xmax "X max \u2264 $tmax ([mc t22 $tmax $xmaxÂ°])"
+  set tiles_ymin "Y min \u2265 0 ([mc t23 0 $ymaxÂ°])"
+  set tiles_ymax "Y max \u2264 $tmax ([mc t24 $tmax $ymaxÂ°])"
+  set coord_xmin "X min \u2265 -$xmax ([mc t21 0 $xmaxÂ°])"
+  set coord_xmax "X max \u2264 +$xmax ([mc t22 $tmax $xmaxÂ°])"
+  set coord_ymin "Y min \u2265 -$ymax ([mc t24 $tmax $ymaxÂ°])"
+  set coord_ymax "Y max \u2264 +$ymax ([mc t23 0 $ymaxÂ°])"
   foreach item {tiles coord} {
     set widget .${item}
     eval tooltip $widget.xmine "\$${item}_xmin"
@@ -2027,7 +2031,7 @@ proc process_start {command process} {
   set ${process}::cr ""
 
   set fd $result
-  fconfigure $fd -blocking 0 -buffering line
+  fconfigure $fd -blocking 0 -buffering line -encoding iso8859-1
 
   set pid [pid $fd]
   set exe [file tail [lindex $command 0]]
@@ -2474,8 +2478,8 @@ proc run_render_job {} {
   append text "$xmin \u2264 xtile \u2264 $xmax\n"
   append text "$ymin \u2264 ytile \u2264 $ymax\n"
   append text "[mc m64]:\n"
-  append text "${::coord.xmin}° \u2264 [mc m65] \u2264 ${::coord.xmax}°\n"
-  append text "${::coord.ymin}° \u2264 [mc m66] \u2264 ${::coord.ymax}°"
+  append text "${::coord.xmin}Â° \u2264 [mc m65] \u2264 ${::coord.xmax}Â°\n"
+  append text "${::coord.ymin}Â° \u2264 [mc m66] \u2264 ${::coord.ymax}Â°"
   puts "$text"
 
   set xcount [expr $xmax-$xmin+1]
