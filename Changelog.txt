@@ -1,3 +1,24 @@
+2024-xx-yy
+
+- Fixed and forced utf-8 character encoding
+- Fixed: For Java version >= 9, handle Java version strings with
+  version number followed by optional pre-release and build information
+- Fixed: Tooltip font size now follows changes in GUI font size
+- Achieve script compatibility with Tcl/Tk versions 8.6, 8.7 and 9.0
+- So that their indicator sizes follow changes in font size,
+  checkbutton and radiobutton have been implemented as ttk widgets
+- Due to ttk theme and ttk widgets, GUI design has slightly changed
+  Apart from fonts, GUI appearances in Windows and Linux have been adapted as well as possible
+- Due to "direct" renderers much worse label handling at tile edges,
+  Mapsforge renderer selection has been hidden and "database" renderer forced.
+  To show again, find and modify "set show_renderer" line in script file
+- Removed Tcl's built-in download facility and forced "curl" to download tiles
+- For tile server version 0.21.0 and newer: added Mapsforge renderer line scaling
+- For performance reasons, output console is now running in a separate thread
+  Installation of Linux package tcl-thread is required!
+- Several minor script improvements
+- README: Notes about required program "curl" and required Linux package tcl-thread
+
 2024-01-22
 
 - Changed tcl & locale files encoding to utf-8
