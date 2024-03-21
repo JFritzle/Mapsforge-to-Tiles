@@ -1,4 +1,8 @@
-2024-xx-yy
+2024-03-21
+
+- Adjusted checkbutton and radiobutton indicator position (Linux only!)
+
+2024-03-19
 
 - Fixed and forced utf-8 character encoding
 - Fixed: For Java version >= 9, handle Java version strings with
