@@ -707,7 +707,7 @@ set themes [lsort -dictionary $themes]
 font create title_font {*}[font configure TkDefaultFont] \
 	-underline 1 -weight bold
 label .title -text $title -font title_font -fg blue
-pack .title -expand 1 -fill x
+pack .title -expand 1 -fill x -pady {0 5}
 
 set github "https://github.com/JFritzle/Mapsforge-to-Tiles"
 tooltip .title "$github"
@@ -2107,12 +2107,15 @@ proc incr_font_size {incr} {
   } else {
     set size [expr round(($height+3)*0.6)]
     set padx [expr round($size*0.3)]
-    set pady [expr round($size*0.1)]
+    if {$::tcl_platform(os) == "Windows NT"} {set pady 0.1}
+    if {$::tcl_platform(os) == "Linux"} {set pady -0.1}
+    set pady [expr round($size*$pady)]
     set margin [list 0 $pady $padx 0]
     foreach item {TCheckbutton TRadiobutton} \
 	{style configure $item -indicatorsize $size -indicatormargin $margin}
   }
   update idletasks
+  wm geometry . [winfo reqwidth .]x[winfo reqheight .]; # Linux hack
 }
 
 # Check selection for completeness
