@@ -1,3 +1,9 @@
+2024-05-01
+
+- Work around Oracle's Java wrapper "java.exe" issue (Windows only!)
+- Improved GUI window geometry handling after changing font size (Linux only!)
+- Made slider widgets operable with the mouse wheel
+
 2024-03-21
 
 - Adjusted checkbutton and radiobutton indicator position (Linux only!)
