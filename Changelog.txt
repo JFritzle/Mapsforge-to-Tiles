@@ -1,5 +1,10 @@
 2024-05-01
 
+- Refine work around Oracle's Java wrapper "java.exe" issue (Windows only!)
+  (Consider 64-bit and 32-bit Java versions)
+
+2024-05-01
+
 - Work around Oracle's Java wrapper "java.exe" issue (Windows only!)
 - Improved GUI window geometry handling after changing font size (Linux only!)
 - Made slider widgets operable with the mouse wheel
