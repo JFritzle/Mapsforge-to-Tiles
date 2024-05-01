@@ -536,10 +536,18 @@ foreach item {maps_folder themes_folder} {
 if {$tcl_platform(os) == "Windows NT" && 
   ([regexp -nocase {^.*/Program Files.*/Common Files/Oracle/Java/.*/java.exe$} $java_cmd]
    || [regexp -nocase {^.*/ProgramData/Oracle/Java/.*/java.exe$} $java_cmd])} {
-  if {![catch {registry get "HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Runtime Environment" CurrentVersion} value] &&
-      ![catch {registry get "HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Runtime Environment\\$value" JavaHome} value]} {
-    set exec [auto_execok "[file normalize $value]/bin/java.exe"]
-    if {$exec != ""} {set java_cmd [lindex $exec 0]}
+  set exec ""
+  foreach item {"HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft" \
+		"HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\JavaSoft"} {
+    foreach key {JRE "Java Runtime Environment" JDK "Java Development Kit"} {
+      if {[catch {registry get "$item\\$key" CurrentVersion} value]} {continue}
+      if {[catch {registry get "$item\\$key\\$value" JavaHome} value]} {continue}
+      set exec [auto_execok "[file normalize $value]/bin/java.exe"]
+      if {$exec != ""} {break}
+    }
+    if {$exec == ""} {continue}
+    set java_cmd [lindex $exec 0]
+    break
   }
 }
 
