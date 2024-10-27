@@ -65,6 +65,7 @@ x15	"TCP-Port"
 x16	"Größe der TCP-Accept-Queue"
 x17	"Minimum gleichzeitiger Threads"
 x18	"Maximum gleichzeitiger Threads"
+x19	"Logging von Server-Requests"
 
 b01	"Starten"
 b02	"Beenden"
