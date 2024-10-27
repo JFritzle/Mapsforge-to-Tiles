@@ -1,3 +1,9 @@
+2024-10-27
+
+- Fixed tooltip background color
+- Support old server type as well as new "tasks" server type
+- README: Notes about new "tasks" server type and it's requirements
+
 2024-05-01
 
 - Refine work around Oracle's Java wrapper "java.exe" issue (Windows only!)
