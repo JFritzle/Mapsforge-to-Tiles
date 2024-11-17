@@ -2363,7 +2363,7 @@ proc srv_start {srv} {
     lappend params contrast-stretch ${::maps.contrast}
     lappend params text-scale ${::text.scale}
     lappend params symbol-scale ${::symbol.scale}
-    lappend params text-scale ${::user.scale}
+    lappend params user-scale ${::user.scale}
     if {$::server_version >= 210000} {lappend params line-scale ${::line.scale}}
   } elseif {$srv == "ovl" && $::server_type == 0} {
     lappend params mapfiles ""
