@@ -1,3 +1,7 @@
+2024-11-20
+
+- Fixed server port from GUI ignored with old server type, used port 8080 instead 
+
 2024-11-17
 
 - Fixed text label scaling not working 
