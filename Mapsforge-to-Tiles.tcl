@@ -2337,6 +2337,12 @@ proc srv_start {srv} {
 
   }
 
+  set params {}
+  if {$::server_type == 0} {
+    lappend params interface ${::tcp.interface}
+    lappend params port $port
+  }
+
   if {$srv == "srv"} {
     set renderer [.renderer_values get]
     lappend params renderer $renderer
