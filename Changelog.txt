@@ -1,3 +1,10 @@
+2024-11-24
+
+- Fixed Mapsforge theme "DEFAULT" selection not working
+- Prepared for upcoming Mapsforge server version 0.22.0:
+  Additional internal render themes "MOTORIDER" and "MOTORIDER_DARK"
+  Additional asymmetric hillshading algorithms
+
 2024-11-20
 
 - Fixed server port from GUI ignored with old server type, used port 8080 instead 
