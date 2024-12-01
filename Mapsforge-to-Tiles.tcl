@@ -368,8 +368,8 @@ set tiles.write 1
 set http.keep 0
 set http.wait 0
 
-set tms_name_srv "Mapsforge Map"
-set tms_name_ovl "Mapsforge Hillshading"
+set name_srv "Map"
+set name_ovl "Hillshading"
 
 foreach item {global hillshading tiles} {
   set fd [open "$ini_folder/$item.ini" a+]
@@ -613,7 +613,7 @@ if {[info exists curl_cmd] && $curl_cmd != ""} {set curl $curl_cmd}
 if {$curl == ""} {set curl [lindex [auto_execok curl] 0]}
 if {$curl == ""} {error_message "[mc e10]" exit}
 
-catch "exec {$curl} -V" data
+catch {exec $curl -V} data
 set string [lindex [split $data] 1]
 set curl_version [split $string .]
 set curl_version [expr 1000*[lindex $curl_version 0]+[lindex $curl_version 1]]
@@ -652,7 +652,7 @@ if {$gm != ""} {
 # set env(MAGICK_LIMIT_HEIGHT)	"10MiP"
 # set env(MAGICK_LIMIT_PIXELS)	"1GiB"
 
-# catch "exec {$gm} convert -list Resource" result
+# catch {exec $gm convert -list Resource} result
 # cputs "[file tail $gm] - $result\n"
 }
 
@@ -705,7 +705,7 @@ if {$magick != ""} {
   close $fd
   set env(MAGICK_CONFIGURE_PATH) $ini_folder
 
-# catch "exec {$magick} -list Resource" result
+# catch {exec $magick -list Resource} result
 # cputs "[file tail $magick] - $result\n"
 }
 
@@ -1129,7 +1129,7 @@ proc choose_tiles_folder {} {
   set folder [tk_chooseDirectory -parent . -initialdir ${::tiles.folder} \
 	-title "$::title - [mc l32]"]
   if {$folder != ""} {
-    if {![file isdirectory $folder]} {catch "file mkdir $folder"}
+    if {![file isdirectory $folder]} {catch {file mkdir $folder}}
     if { [file isdirectory $folder]} {set ::tiles.folder $folder}
   }
 }
@@ -1296,8 +1296,8 @@ proc position_toplevel_window {widget} {
     if {[auto_execok xwininfo] == ""} {
       cputw "Please install program 'xwininfo' by Linux package manager"
       cputw "to evaluate exact window border width."
-    } elseif {![catch "exec bash -c \"export LANG=C;xwininfo -id [wm frame .] \
-	| grep Width | cut -d: -f2\"" wmwidth]} {
+    } elseif {![catch {exec bash -c "export LANG=C;xwininfo -id [wm frame .] \
+	| grep Width | cut -d: -f2"} wmwidth]} {
       set bdwidth [expr ($wmwidth-$width)/2]
       set width $wmwidth
     }
@@ -2287,80 +2287,79 @@ proc process_running {process} {
 
 proc srv_start {srv} {
 
+  set port [set ::tcp.port]
+  set name [set ::name_$srv]
+
   # Map or hillshading?
 
   set shading ${::shading.onoff}
   if {$srv == "srv"} {
     if {${::shading.layer} == "asmap"} {set shading 0}
   } elseif {$srv == "ovl"} {
-    if {!${::shading.onoff}} {return}
-    if {${::shading.layer} == "onmap"} {return}
+    if {!${::shading.onoff} || ${::shading.layer} == "onmap"} {
+      file delete $::tmpdir/tasks/$name.properties
+      return
+    }
   }
 
   # Compose command line
 
-  set port [set ::tcp.port]
-  set name [set ::tms_name_$srv]
-  append name " Server \[[string toupper $srv]\]"
-
-  lappend command $::java_cmd -Xmx1G -Xms256M -Xmn256M
-  if {[info exists ::java_args]} {lappend command {*}$::java_args}
-  lappend command -Dfile.encoding=UTF-8
+  lappend params -Xmx1G -Xms256M -Xmn256M
+  if {[info exists ::java_args]} {lappend params {*}$::java_args}
+  lappend params -Dfile.encoding=UTF-8
 
   set engine ${::rendering.engine}
   if {$engine != "(default)"} {
     set engine [file dirname $::server_jar]/$engine
     if {$::java_version <= 8} {
-      lappend command -Xbootclasspath/p:$engine
+      lappend params -Xbootclasspath/p:$engine
       set engine [regsub {.jar} $engine {-sun-java2d.jar}]
-      lappend command -Xbootclasspath/p:$engine
-      lappend command -Dsun.java2d.renderer=sun.java2d.marlin.DMarlinRenderingEngine
+      lappend params -Xbootclasspath/p:$engine
+      lappend params -Dsun.java2d.renderer=sun.java2d.marlin.DMarlinRenderingEngine
     } else {
-      lappend command --patch-module java.desktop=$engine
+      lappend params --patch-module java.desktop=$engine
     }
   }
 
 # set now [clock format [clock seconds] -format "%Y-%m-%d_%H-%M-%S"]
-# lappend command -Xloggc:$::cwd/gc.$now.log -XX:+PrintGCDetails
-# lappend command -Dlog4j.debug
-  lappend command -Dlog4j.configuration=file:$::tmpdir/log4j.properties
+# lappend params -Xloggc:$::cwd/gc.$now.log -XX:+PrintGCDetails
+# lappend params -Dlog4j.debug
+  lappend params -Dlog4j.configuration=file:$::tmpdir/log4j.properties
 
-  lappend command -Dsun.java2d.opengl=true
-# lappend command -Dsun.java2d.d3d=true
-# lappend command -Dsun.java2d.accthreshold=0
-# lappend command -Dsun.java2d.translaccel=true
-# lappend command -Dsun.java2d.ddforcevram=true
-# lappend command -Dsun.java2d.ddscale=true
-# lappend command -Dsun.java2d.ddblit=true
-# lappend command -Dsun.java2d.renderer.log=true
-  lappend command -Dsun.java2d.renderer.log=false
-  lappend command -Dsun.java2d.renderer.useLogger=true
-# lappend command -Dsun.java2d.renderer.doStats=true
-# lappend command -Dsun.java2d.renderer.doChecks=true
-# lappend command -Dsun.java2d.renderer.useThreadLocal=true
-  lappend command -Dsun.java2d.renderer.profile=speed
-  lappend command -Dsun.java2d.renderer.useRef=hard
-  lappend command -Dsun.java2d.renderer.pixelWidth=2048
-  lappend command -Dsun.java2d.renderer.pixelHeight=2048
-  lappend command -Dsun.java2d.renderer.tileSize_log2=8
-  lappend command -Dsun.java2d.renderer.tileWidth_log2=8
-  lappend command -Dsun.java2d.renderer.subPixel_log2_X=2
-  lappend command -Dsun.java2d.renderer.subPixel_log2_Y=2
-  lappend command -Dsun.java2d.renderer.useFastMath=true
-  lappend command -Dsun.java2d.render.bufferSize=524288
-# lappend command -Dawt.useSystemAAFontSettings=on
+  lappend params -Dsun.java2d.opengl=true
+# lappend params -Dsun.java2d.d3d=true
+# lappend params -Dsun.java2d.accthreshold=0
+# lappend params -Dsun.java2d.translaccel=true
+# lappend params -Dsun.java2d.ddforcevram=true
+# lappend params -Dsun.java2d.ddscale=true
+# lappend params -Dsun.java2d.ddblit=true
+# lappend params -Dsun.java2d.renderer.log=true
+  lappend params -Dsun.java2d.renderer.log=false
+  lappend params -Dsun.java2d.renderer.useLogger=true
+# lappend params -Dsun.java2d.renderer.doStats=true
+# lappend params -Dsun.java2d.renderer.doChecks=true
+# lappend params -Dsun.java2d.renderer.useThreadLocal=true
+  lappend params -Dsun.java2d.renderer.profile=speed
+  lappend params -Dsun.java2d.renderer.useRef=hard
+  lappend params -Dsun.java2d.renderer.pixelWidth=2048
+  lappend params -Dsun.java2d.renderer.pixelHeight=2048
+  lappend params -Dsun.java2d.renderer.tileSize_log2=8
+  lappend params -Dsun.java2d.renderer.tileWidth_log2=8
+  lappend params -Dsun.java2d.renderer.subPixel_log2_X=2
+  lappend params -Dsun.java2d.renderer.subPixel_log2_Y=2
+  lappend params -Dsun.java2d.renderer.useFastMath=true
+  lappend params -Dsun.java2d.render.bufferSize=524288
+# lappend params -Dawt.useSystemAAFontSettings=on
 
-  lappend command -jar $::server_jar
+  set fd [open $::tmpdir/java_args w]
+  foreach item $params {puts $fd $item}
+  close $fd
 
-  if {$::server_type == 1} {
-    set config $::tmpdir/config
-    file mkdir $config/tasks
-  }
+  lappend command $::java_cmd @$::tmpdir/java_args -jar $::server_jar
 
   if {$::server_type == 1 && $srv == "srv"} {
-    lappend command -config [file nativename $config]
+    lappend command -config [file nativename $::tmpdir]
 
-    set file server.properties
     set data "terminate=true\n"
     append data "requestlog-format="
     if {${::log.requests}} {append data "From %{client}a Get %U%q Status %s Size %O bytes Time %{ms}T ms"}
@@ -2369,11 +2368,9 @@ proc srv_start {srv} {
     append data "port=$port\n"
     append data "acceptQueueSize=${::tcp.maxconn}\n"
 
-    if {$srv == "srv"} {
-      set fd [open $config/$file w]
-      puts -nonewline $fd $data
-      close $fd
-    }
+    set fd [open $::tmpdir/server.properties w]
+    puts -nonewline $fd $data
+    close $fd
 
   }
 
@@ -2456,8 +2453,7 @@ proc srv_start {srv} {
     set data ""
     foreach {item value} $params {append data "$item=$value\n"}
 
-    set task [lindex [split $name] 1]
-    set fd [open $config/tasks/$task.properties w]
+    set fd [open $::tmpdir/tasks/$name.properties w]
     puts -nonewline $fd $data
     close $fd
 
@@ -2467,6 +2463,7 @@ proc srv_start {srv} {
 
   # Server's TCP port is currently in use?
 
+  set text "$name Server \[[string toupper $srv]\]"
   set count 0
   while {$count < 5} {
     set rc [catch {socket -server {} -myaddr 127.0.0.1 $port} fd]
@@ -2475,7 +2472,7 @@ proc srv_start {srv} {
     after 200
   }
   if {$rc} {
-    error_message [mc m59 $name $port $fd] return
+    error_message [mc m59 $text $port $fd] return
     return
   }
   close $fd
@@ -2483,7 +2480,7 @@ proc srv_start {srv} {
 
   # Start server
 
-  cputi "[mc m54 $name] ..."
+  cputi "[mc m54 $text] ..."
   cputs "[get_shell_command $command]"
 
   process_start $command $srv
@@ -2491,8 +2488,8 @@ proc srv_start {srv} {
   # Wait until port becomes ready to accept connections or server aborts
   # Send dummy render request and wait for rendering initialization
 
-  set url "http://127.0.0.1:${port}/0/0/0.png"
-  if {$::server_type == 1} {append url "?task=$task"}
+  set url "http://127.0.0.1:$port/0/0/0.png"
+  if {$::server_type == 1} {append url "?task=$name"}
   while {[process_running $srv]} {
     if {[catch {::http::geturl $url} token]} {after 10; continue}
     set size [::http::size $token]
@@ -2502,7 +2499,7 @@ proc srv_start {srv} {
   after 20
   update
 
-  if {![process_running $srv]} {error_message [mc m55 $name] return; return}
+  if {![process_running $srv]} {error_message [mc m55 $text] return; return}
   set ${srv}::port $port
   set ${srv}::cr "\r"
   if {$::server_type == 0} {cputs "\r"}
@@ -2519,7 +2516,7 @@ proc srv_stop {srv} {
     process_kill $srv
   } else {
     namespace upvar $srv port port
-    set url "http://127.0.0.1:${port}/terminate"
+    set url "http://127.0.0.1:$port/terminate"
     if {![catch {::http::geturl $url} token]} {
       if {[::http::status $token] == "eof"} {set code 200} \
       else {set code [::http::ncode $token]}
@@ -2763,9 +2760,9 @@ proc run_render_job {} {
     # Url
 
     set url_pattern "http://127.0.0.1:${::tcp.port}/{z}/{x}/{y}.png"
-    set name [set ::tms_name_$srv]
+    set name [set ::name_$srv]
     set sfx {}
-    if {$::server_type == 1} {lappend sfx "task=[lindex [split $name] 1]"}
+    if {$::server_type == 1} {lappend sfx "task=$name"}
     if {$srv == "srv" && $::tile_size != 256} \
 	{lappend sfx "tileRenderSize=$::tile_size"}
     set sfx [join $sfx "&"]
@@ -2849,7 +2846,7 @@ proc run_render_job {} {
 
   # Fill missing tiles by white tile
 
-  set void [pid].void.png
+  set void $::tmpdir/void.png
   if {$use_magick == "gm"} {
     exec $exe convert -size 256x256 xc:white $void
   } elseif {$use_magick == "magick"} {
@@ -2865,7 +2862,8 @@ proc run_render_job {} {
   cputs "\n[mc m84] ...\n"
   set start [clock milliseconds]
 
-  set fd [file tempfile batch_file]
+  set batch_file $::tmpdir/batch_file
+  set fd [open $batch_file w+]
   if {$use_magick == "magick"} \
 	{puts $fd "-format \"%f null: %t.ovl -layers composite %f\\n\""}
   set clean {}
@@ -2903,7 +2901,7 @@ proc run_render_job {} {
   seek $fderr 0
   set data [split [read -nonewline $fderr] \n]
   close $fderr
-  file delete -force $batch_file {*}$clean
+  file delete -force {*}$clean
   set stop [clock milliseconds]
 
   if {[llength $data]} {
@@ -2939,7 +2937,7 @@ proc run_render_job {} {
 
   set start [clock milliseconds]
 
-  set batch_file [pid].tiles.lst
+  set batch_file $::tmpdir/tiles.lst
   set fd [open $batch_file w]
   set tiles {}
   set ytile $ymin
@@ -2966,7 +2964,6 @@ proc run_render_job {} {
   seek $fderr 0
   set data [split [read -nonewline $fderr] \n]
   close $fderr
-  file delete -force $batch_file
   set stop [clock milliseconds]
 
   if {[llength $data]} {
@@ -3006,7 +3003,6 @@ proc run_render_job {} {
 
   # End tiles processing
 
-  file delete -force $void
   cd $::cwd
 
   if {$rc || $::cancel} {return}
@@ -3060,8 +3056,9 @@ while {1} {
 
 # Create server's temporary files folder
 
-append tmpdir /[format "MTS%8.8x" [pid]]
+append tmpdir /[format "TMS%8.8x" [pid]]
 file mkdir $tmpdir
+if {$server_type == 1} {file mkdir $tmpdir/tasks}
 
 # Create server logging properties
 
@@ -3100,7 +3097,7 @@ unset action
 
 # Delete temporary files folder
 
-catch "file delete -force $tmpdir"
+catch {file delete -force $tmpdir}
 
 # Unmap main toplevel window
 
@@ -3127,7 +3124,7 @@ if {[send $ctid "winfo ismapped ."]} {
 destroy .
 
 # Let Windows OS remove remaining temporary TCL folder after some delay
-regsub {MTS} $tmpdir {TCL} tmpdir
+regsub {TMS} $tmpdir {TCL} tmpdir
 if {$tcl_platform(os) == "Windows NT" && [file isdirectory $tmpdir]} {
   regsub -all {/} $tmpdir {\\\\} tmp
   exec cmd.exe /C "TIMEOUT /T 1 /NOBREAK > NUL & RMDIR /S /Q $tmp" &

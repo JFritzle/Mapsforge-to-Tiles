@@ -22,6 +22,9 @@ Rendered tiles may optionally be composed to an image.
 Screenshot of graphical user interface:
 ![GUI](https://github.com/JFritzle/Mapsforge-to-Tiles/assets/62614244/ef917ef5-02bf-41f5-a062-2b1b24c98b6d)
 
+Please note:  
+Old tile server type has reached end of life and version 0.21.4 is last version released. Further development only takes place on new "tasks" server type. After some grace period, graphical user interface support for the old server type will be dropped. Therefore, an early switch to the new server type is recommended.   
+
 ### Installation
 
 1.	Java runtime environment (JRE) or Java development kit (JDK)  
