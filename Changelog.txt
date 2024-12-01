@@ -1,3 +1,13 @@
+2024-12-01
+
+- Rename temp folder from MTSxxxxxxxx to TMSxxxxxxxx
+- To improve the readability of the Java command line,
+  all Java-specific arguments have been moved from command line
+  into an argument file within temp folder
+- With new "tasks" server type, use temp folder for config folder
+- Minor script optimizations
+- README: Switch to the new "tasks" server type is recommended
+
 2024-11-24
 
 - Fixed Mapsforge theme "DEFAULT" selection not working
