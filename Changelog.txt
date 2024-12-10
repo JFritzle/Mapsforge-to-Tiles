@@ -1,3 +1,12 @@
+2024-12-10
+
+- Fixed broken Java 8 support, argument file not supported by Java 8
+- Fixed selecting Marlin rendering engine causes Tcl script to abort,
+  when it's folder path contains white spaces
+- Tooltip asymmetric hillshading maximum slope
+- Minor script optimizations
+- README: Switch to recently released Tcl version 9 is recommended (Windows only!)
+
 2024-12-01
 
 - Rename temp folder from MTSxxxxxxxx to TMSxxxxxxxx
