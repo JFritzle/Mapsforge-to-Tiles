@@ -1,0 +1,22 @@
+2025-01-28
+
+- Now showing Tcl/Tk version and script release date in output console
+- Added tooltip to maps selection
+- Now accepting uppercase layer ids theme file
+- Now accepting quoted unicode characters in theme file
+- Updated README hints
+
+2025-01-20
+
+- Improved input handling of number values
+- Changed hillshading parameter text to Mapsforge notation
+- Added fast adaptive hillshading "adaptasy" (server version >= 0.23.0.1)
+- Added optional parameters for minimum and maximum hillshading zoom level
+  to allow overriding built-in hillshading zoom levels
+  (server version >= 0.23.0.2)
+
+2024-12-31
+
+- Initial commit supporting only new "multiple tasks" server type
+- Dropped support of old "single task" server type
+- Dropped support of Java version < 11
