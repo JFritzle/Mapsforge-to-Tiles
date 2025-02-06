@@ -147,7 +147,9 @@ Upper left half of image was rendered with hillshading settings as  above but "H
 * Output console  
 While console output of tile server can be informative and helpful to verify what is happening as well as to analyze errors, writing to console costs some performance. Therefore the console should be hidden if not needed. 
 * Built-in world map  
-Since the built-in [Mapsforge world map](https://download.mapsforge.org/maps/world/world.map) only shows the coastline, it only serves as a rough overview. Due to map's low resolution, coastlines show inaccurate at high resolution. Because the Mapsforge renderer prefers land on the world map to sea on the selected detailed local map, it may be advisable to disable the built-in world map when rendering coastal regions at high resolution. In order not to cover an accurate map, the built-in world map has been automatically deactivated at higher zoom levels since tile server version 0.21.0.3.
+Since the built-in [Mapsforge world map](https://download.mapsforge.org/maps/world/world.map) only shows the coastline, it only serves as a rough overview. Due to map's low resolution, coastlines show inaccurate at high resolution.  
+In order not to cover an accurate map, the built-in world map has been automatically deactivated at higher zoom levels since tile server version 0.21.0.3.    
+Starting with server version 0.23.0.3, built-in world map is rendered with lower priority than user-defined accurate maps. Zoom level restriction was therefore removed. 
 * Area not covered by selected maps consists of "no content" tiles. However whole world is covered, when built-in Mapsforge world map is appended to selected maps.
 * Hillshading
   * When selecting "Hillshading on map", map and hillshading are rendered  into one single map.  

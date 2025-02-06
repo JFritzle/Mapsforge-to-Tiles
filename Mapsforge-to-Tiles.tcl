@@ -25,7 +25,7 @@ if {[encoding system] != "utf-8"} {
 if {![info exists tk_version]} {package require Tk}
 wm withdraw .
 
-set version "2025-01-28"
+set version "2025-02-06"
 set script [file normalize [info script]]
 set title [file tail $script]
 set cwd [pwd]
@@ -491,7 +491,9 @@ ctsend {
     .txt yview moveto [lindex $py 0]
   }
 
+  set lines 0
   proc write {text} {
+    incr ::lines
     .txt configure -state normal
     if {[string index $text 0] == "\r"} {
       set text [string range $text 1 end]
@@ -500,6 +502,7 @@ ctsend {
     .txt insert end $text
     .txt configure -state disabled
     .txt see end
+    if {$::lines == 256} {update; set ::lines 0}
   }
 
   proc show_hide {show} {
@@ -2328,6 +2331,7 @@ proc srv_start {} {
 
 # set now [clock format [clock seconds] -format "%Y-%m-%d_%H-%M-%S"]
 # lappend params -Xloggc:$::cwd/gc.$now.log -XX:+PrintGCDetails
+  lappend params -Dslf4j.internal.verbosity=WARN
 # lappend params -Dlog4j.debug
   lappend params -Dlog4j.configuration=file:$::tmpdir/log4j.properties
 
@@ -3088,6 +3092,7 @@ wm withdraw .
 
 # Save settings to folder ini_folder
 
+foreach item {global theme shading tiles} {save_${item}_settings}
 
 # Wait until output console window was closed
 
