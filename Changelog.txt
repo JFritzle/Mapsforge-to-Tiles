@@ -1,3 +1,8 @@
+2025-02-06
+
+- Fixed settings not saved at quit
+- Updated README hints
+
 2025-01-28
 
 - Now showing Tcl/Tk version and script release date in output console
