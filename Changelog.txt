@@ -1,3 +1,13 @@
+2025-03-05
+
+- (Re-)allowed positioning insert cursor in text input fields
+- Selection in file selection window was not highlighted (Linux only!)
+- Removed ability to disable the output console completely
+- Suppressed meaningless SLF4J information output
+- Removed work around to remove remaining temporary Tcl folder
+  as Tcl bug was fixed in recent Tcl versions.
+- Updated README
+
 2025-02-06
 
 - Fixed settings not saved at quit
