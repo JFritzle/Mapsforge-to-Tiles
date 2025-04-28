@@ -25,7 +25,7 @@ if {[encoding system] != "utf-8"} {
 if {![info exists tk_version]} {package require Tk}
 wm withdraw .
 
-set version "2025-03-05"
+set version "2025-04-28"
 set script [file normalize [info script]]
 set title [file tail $script]
 set cwd [pwd]
@@ -2327,7 +2327,7 @@ proc srv_start {} {
 # lappend params -Xloggc:$::cwd/gc.$now.log -XX:+PrintGCDetails
   lappend params -Dslf4j.internal.verbosity=WARN
 # lappend params -Dlog4j.debug
-  lappend params -Dlog4j.configuration=file:$::tmpdir/log4j.properties
+  lappend params -Dlog4j.configuration=file:"$::tmpdir/log4j.properties"
 
   lappend params -Dsun.java2d.opengl=true
 # lappend params -Dsun.java2d.d3d=true
