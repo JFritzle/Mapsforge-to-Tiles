@@ -1,3 +1,8 @@
+2025-04-28
+
+- Fixed: Spaces in temporary folder path resulted in error message
+  "[SRV] Error: Could not find or load main class ...log4j.properties" 
+
 2025-03-05
 
 - (Re-)allowed positioning insert cursor in text input fields
