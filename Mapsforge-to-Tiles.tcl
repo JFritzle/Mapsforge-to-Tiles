@@ -25,7 +25,7 @@ if {[encoding system] != "utf-8"} {
 if {![info exists tk_version]} {package require Tk}
 wm withdraw .
 
-set version "2025-04-28"
+set version "2025-04-29"
 set script [file normalize [info script]]
 set title [file tail $script]
 set cwd [pwd]
@@ -777,7 +777,11 @@ cd $themes_folder
 set themes [find_files "" "*.xml"]
 cd $cwd
 lappend themes (DEFAULT) (OSMARENDER)
-if {$server_version >= 220000} {lappend themes (MOTORIDER) (MOTORIDER_DARK)}
+if {$server_version >= 250000} {
+  lappend themes (MOTORIDER) (BIKER)
+} elseif {$server_version >= 220000} {
+  lappend themes (MOTORIDER) (MOTORIDER_DARK)
+}
 set themes [lsort -dictionary $themes]
 
 # --- Begin of main window left column
