@@ -1,3 +1,9 @@
+2025-04-29
+
+- Removed no longer existing internal render theme "MOTORIDER_DARK",
+  added new internal render theme "BIKER" instead
+  (server version >= 0.25.0.0)
+
 2025-04-28
 
 - Fixed: Spaces in temporary folder path resulted in error message
