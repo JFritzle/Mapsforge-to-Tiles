@@ -1,3 +1,8 @@
+2025-06-14
+
+- Made DEFAULT render theme first theme in list of available render themes
+- Added support for Marlin-renderer for JDK17+
+
 2025-04-29
 
 - Removed no longer existing internal render theme "MOTORIDER_DARK",
