@@ -1,3 +1,9 @@
+2025-08-20
+
+- Modified console output to avoid console potentially
+  freezing and becoming unresponsable to keyboard/mouse
+  due to being flooded
+
 2025-06-14
 
 - Made DEFAULT render theme first theme in list of available render themes

@@ -25,7 +25,7 @@ if {[encoding system] != "utf-8"} {
 if {![info exists tk_version]} {package require Tk}
 wm withdraw .
 
-set version "2025-06-14"
+set version "2025-08-20"
 set script [file normalize [info script]]
 set title [file tail $script]
 set cwd [pwd]
@@ -494,9 +494,8 @@ ctsend {
     .txt yview moveto [lindex $py 0]
   }
 
-  set lines 0
+  set aid 0
   proc write {text} {
-    incr ::lines
     .txt configure -state normal
     if {[string index $text 0] == "\r"} {
       set text [string range $text 1 end]
@@ -504,8 +503,10 @@ ctsend {
     }
     .txt insert end $text
     .txt configure -state disabled
-    .txt see end
-    if {$::lines == 256} {update; set ::lines 0}
+    # Prevent the console from freezing when
+    # flooded with incoming write requests
+    catch "after cancel $::aid"
+    set ::aid [after 100 {.txt see end}]
   }
 
   proc show_hide {show} {
@@ -526,26 +527,16 @@ ctsend {
     }
   }
 
-  lassign [chan pipe] fdi fdo
-  thread::detach $fdo
-  fconfigure $fdi -blocking 0 -buffering line -translation lf
-  fileevent $fdi readable "
-    while {\[gets $fdi line\] >= 0} {write \"\$line\\n\"}
-  "
 }
-
-set fdo [ctsend "set fdo"]
-thread::attach $fdo
-fconfigure $fdo -blocking 0 -buffering line -translation lf
-interp alias {} ::cputs {} ::puts $fdo
 
 if {$console == 1} {
   set console.show 1
   ctsend "show_hide 1"
 }
 
-# Mark output message
+# Write to console
 
+proc cputs {text} {thread::send -async $::ctid [list write $text\n]}
 proc cputi {text} {cputs "\[---\] $text"}
 proc cputw {text} {cputs "\[+++\] $text"}
 
