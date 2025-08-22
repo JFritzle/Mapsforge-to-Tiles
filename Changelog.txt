@@ -1,3 +1,8 @@
+2025-08-22
+
+- Modified console again
+  to prevent from potential core dump on Linux 
+
 2025-08-20
 
 - Modified console output to avoid console potentially

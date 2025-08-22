@@ -25,7 +25,7 @@ if {[encoding system] != "utf-8"} {
 if {![info exists tk_version]} {package require Tk}
 wm withdraw .
 
-set version "2025-08-20"
+set version "2025-08-22"
 set script [file normalize [info script]]
 set title [file tail $script]
 set cwd [pwd]
@@ -572,6 +572,10 @@ foreach item {maps_folder themes_folder} {
   if {![file isdirectory $value]} {error_message [mc e05 $value $item] exit}
 }
 
+# Set minimum required Java version
+
+set java_version_min 11
+
 # Work around Oracle's Java wrapper "java.exe" issue:
 # Wrapper requires running within real Windows console,
 # therefore not working within Tcl script called by "wish"!
@@ -615,7 +619,8 @@ if {!$rc} {
 
 if {$rc || $java_version == 0} \
   {error_message [mc e08 Java [get_shell_command $command] $result] exit}
-if {$java_version < 11} {error_message [mc e07 Java $java_string 11] exit}
+if {$java_version < $java_version_min} \
+  {error_message [mc e07 Java $java_string $java_version_min] exit}
 
 # Evaluate numeric Mapsforge server version
 # from output line ending with version string " version: x.y.z.c"
