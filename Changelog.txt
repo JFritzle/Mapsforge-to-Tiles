@@ -1,3 +1,11 @@
+2025-08-27
+
+- Speed up console output
+- Hidden console window no longer reduces performance
+- For performance reasons, console output window
+  can now be disabled during console output generation
+  and enabled again later to view cumulative output
+
 2025-08-22
 
 - Modified console again
