@@ -25,7 +25,7 @@ if {[encoding system] != "utf-8"} {
 if {![info exists tk_version]} {package require Tk}
 wm withdraw .
 
-set version "2025-08-27"
+set version "2025-09-25"
 set script [file normalize [info script]]
 set title [file tail $script]
 set cwd [pwd]
@@ -198,7 +198,8 @@ bind TCombobox <Return> {event generate %W <Button-1>}
 
 bind Entry <FocusIn> {grab %W}
 bind Entry <Tab> {grab release %W}
-bind Entry <Button-1> {+button-1-press %W %X %Y}
+foreach item {Button-1 Control-Button-1 Shift-Button-1} \
+	{bind Entry <$item> "+entry-button-1 $item %W %X %Y"}
 
 proc scale_updown {w d} {$w set [expr [$w get]+$d*[$w cget -resolution]]}
 bind Scale <MouseWheel> {scale_updown %W [expr %D>0?+1:-1]}
@@ -206,19 +207,15 @@ bind Scale <Button-4> {scale_updown %W -1}
 bind Scale <Button-5> {scale_updown %W +1}
 bind Scale <Button-1> {+focus %W}
 
-proc button-1-press {W X Y} {
+proc entry-button-1 {E W X Y} {
   set w [winfo containing $X $Y]
   if {"$w" == "$W"} {focus $W; return}
   grab release $W
   if {"$w" == ""} return
-  focus $w
-  switch [winfo class $w] {
-    TCheckbutton -
-    TRadiobutton -
-    TButton	{$w instate !disabled {$w invoke}}
-    TCombobox	{$w instate !disabled {ttk::combobox::Press "" $w \
-		[expr $X-[winfo rootx $w]] [expr $Y-[winfo rooty $w]]}}
-  }
+  focus -force $w
+  update
+  event generate $w <$E> \
+	-x [expr $X-[winfo rootx $w]] -y [expr $Y-[winfo rooty $w]]
 }
 
 # Bitmap arrow down
@@ -790,8 +787,10 @@ cd $themes_folder
 set themes [find_files "" "*.xml"]
 cd $cwd
 lappend themes (OSMARENDER)
-if {$server_version >= 250000} {
-  lappend themes (MOTORIDER) (BIKER)
+if {$server_version >= 260100} {
+  lappend themes (BIKER) (DARK) (INDIGO) (MOTORIDER) 
+} elseif {$server_version >= 250000} {
+  lappend themes (BIKER) (MOTORIDER)
 } elseif {$server_version >= 220000} {
   lappend themes (MOTORIDER) (MOTORIDER_DARK)
 }
@@ -1836,6 +1835,11 @@ proc update_theme_styles_overlays {} {
   if {[regexp {^\(.*\)$} $theme]} {
     # Built-in themes have no style: nothing to do
     # Built-in themes have hillshading: enable hillshading configuration
+    .shading.onmap configure -state normal
+    set menu_first -1
+  } elseif {![file exists $::themes_folder/$theme]} {
+    # Theme file no longer exists, use built-in default
+    set ::theme.selection [lindex $::themes 0]
     .shading.onmap configure -state normal
     set menu_first -1
   } else {
