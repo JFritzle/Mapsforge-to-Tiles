@@ -1,3 +1,10 @@
+2025-10-06
+
+- Added overlay selection for internal render themes
+  (currently "BIKER", "DARK", "INDIGO" and "MOTORIDER")
+- Workaround running script by "Open with" on Windows
+- Minor script optimizations
+
 2025-09-25
 
 - Fixed script aborting when previous theme file no longer exists

@@ -25,9 +25,12 @@ if {[encoding system] != "utf-8"} {
 if {![info exists tk_version]} {package require Tk}
 wm withdraw .
 
-set version "2025-09-25"
+set version "2025-10-06"
 set script [file normalize [info script]]
 set title [file tail $script]
+
+# Workaround running script by "Open with" on Windows
+if {[pwd] == "C:/Windows/System32"} {cd [file dirname $script]}
 set cwd [pwd]
 
 # Required packages
@@ -788,7 +791,7 @@ set themes [find_files "" "*.xml"]
 cd $cwd
 lappend themes (OSMARENDER)
 if {$server_version >= 260100} {
-  lappend themes (BIKER) (DARK) (INDIGO) (MOTORIDER) 
+  lappend themes (BIKER) (DARK) (INDIGO) (MOTORIDER)
 } elseif {$server_version >= 250000} {
   lappend themes (BIKER) (MOTORIDER)
 } elseif {$server_version >= 220000} {
@@ -824,11 +827,11 @@ pack .l -side left -anchor nw
 if {![info exists maps.language]} {set maps.language $language}
 labelframe .lang -labelanchor w -text [mc l11]:
 pack .lang -in .l -expand 1 -fill x -pady 1
-entry .lang_value -textvariable maps.language -width 4 -justify center
-pack .lang_value -in .lang -side right
-foreach item {.lang .lang_value} {tooltip $item [mc l11t]}
+entry .lang.value -textvariable maps.language -width 4 -justify center
+pack .lang.value -side right
+foreach item {.lang .lang.value} {tooltip $item [mc l11t]}
 
-.lang_value configure -validate key -vcmd {
+.lang.value configure -validate key -vcmd {
   if {%d < 1} {return 1}
   if {[string length %P] > 2} {return 0}
   if {![string is lower %S]}  {return 0}
@@ -839,31 +842,31 @@ foreach item {.lang .lang_value} {tooltip $item [mc l11t]}
 
 labelframe .maps_folder -labelanchor nw -text [mc l13]:
 pack .maps_folder -in .l -expand 1 -fill x -pady 1
-entry .maps_folder_value -textvariable maps_folder \
+entry .maps_folder.value -textvariable maps_folder \
 	-state readonly -takefocus 0 -highlightthickness 0
-pack .maps_folder_value -in .maps_folder -expand 1 -fill x
+pack .maps_folder.value -expand 1 -fill x
 
 labelframe .maps -labelanchor nw -text [mc l14]:
 pack .maps -in .l -expand 1 -fill x -pady 1
-scrollbar .maps_scroll -command ".maps_values yview"
-listbox .maps_values -selectmode extended -activestyle none \
+scrollbar .maps.scroll -command ".maps.values yview"
+listbox .maps.values -selectmode extended -activestyle none \
 	-takefocus 1 -exportselection 0 \
 	-width 0 -height [expr min([llength $maps],8)] \
-	-yscrollcommand ".maps_scroll set"
-pack .maps_scroll -in .maps -side right -fill y
-pack .maps_values -in .maps -side left -expand 1 -fill both
-tooltip .maps_values [mc l14t]
+	-yscrollcommand ".maps.scroll set"
+pack .maps.scroll -side right -fill y
+pack .maps.values -side left -expand 1 -fill both
+tooltip .maps.values [mc l14t]
 
 foreach map $maps {
-  .maps_values insert end $map
-  if {$map in ${maps.selection}} {.maps_values selection set end}
+  .maps.values insert end $map
+  if {$map in ${maps.selection}} {.maps.values selection set end}
 }
-set selection [.maps_values curselection]
-if {[llength $selection] > 0} {.maps_values see [lindex $selection 0]}
+set selection [.maps.values curselection]
+if {[llength $selection] > 0} {.maps.values see [lindex $selection 0]}
 
-bind .maps_values <<ListboxSelect>> {
-  set maps.selection [lmap index [.maps_values curselection] \
-	{.maps_values get $index}]
+bind .maps.values <<ListboxSelect>> {
+  set maps.selection [lmap index [.maps.values curselection] \
+	{.maps.values get $index}]
 }
 
 # Append Mapsforge world map
@@ -875,9 +878,9 @@ pack .maps_world -in .l -expand 1 -fill x
 
 labelframe .themes_folder -labelanchor nw -text [mc l16]:
 pack .themes_folder -in .l -expand 1 -fill x -pady 1
-entry .themes_folder_value -textvariable themes_folder \
+entry .themes_folder.value -textvariable themes_folder \
 	-state readonly -takefocus 0 -highlightthickness 0
-pack .themes_folder_value -in .themes_folder -expand 1 -fill x
+pack .themes_folder.value -expand 1 -fill x
 
 set width 0
 foreach item $themes \
@@ -886,18 +889,18 @@ set width [expr $width/[font measure TkTextFont "0"]+1]
 
 labelframe .themes -labelanchor nw -text [mc l17]:
 pack .themes -in .l -expand 1 -fill x -pady 1
-combobox .themes_values -width $width \
+combobox .themes.values -width $width \
 	-validate key -validatecommand {return 0} \
 	-textvariable theme.selection -values $themes
-if {[.themes_values current] < 0} {.themes_values current 0}
-pack .themes_values -in .themes -expand 1 -fill x
+if {[.themes.values current] < 0} {.themes.values current 0}
+pack .themes.values -expand 1 -fill x
 
 # Mapsforge theme style selection
 
 labelframe .styles -labelanchor nw -text [mc l18]:
-combobox .styles_values -validate key -validatecommand {return 0}
-pack .styles_values -in .styles -expand 1 -fill x
-bind .styles_values <<ComboboxSelected>> update_overlays_selection
+combobox .styles.values -validate key -validatecommand {return 0}
+pack .styles.values -expand 1 -fill x
+bind .styles.values <<ComboboxSelected>> update_overlays_selection
 
 # Mapsforge theme overlays selection
 
@@ -946,14 +949,14 @@ pack .r -anchor nw
 
 labelframe .xyrange -labelanchor w -text [mc l21]:
 pack .xyrange -in .r -expand 1 -fill x -pady 1
-combobox .xyrange_values -width 18 -values [list [mc v22] [mc v23]] \
+combobox .xyrange.values -width 18 -values [list [mc v22] [mc v23]] \
 	-validate key -validatecommand {return 0}
-if {[info exists xyrange.mode]} {.xyrange_values current ${::xyrange.mode}}
-if {[.xyrange_values current] < 0} {.xyrange_values current 0}
-pack .xyrange_values -in .xyrange -side right -anchor e -expand 1
+if {[info exists xyrange.mode]} {.xyrange.values current ${::xyrange.mode}}
+if {[.xyrange.values current] < 0} {.xyrange.values current 0}
+pack .xyrange.values -side right -anchor e -expand 1
 
 proc switch_xyrange {} {
-  set range [.xyrange_values current]
+  set range [.xyrange.values current]
   if {$range == 0} {
     set w tiles
     set r coord
@@ -1005,12 +1008,12 @@ foreach item {tiles coord} {
 
 labelframe .zoom -labelanchor w -text [mc l24]:
 pack .zoom -in .r -fill x -expand 1 -pady 1
-scale .zoom_scale -from $min_zoom_level -to $max_zoom_level -resolution 1 \
+scale .zoom.scale -from $min_zoom_level -to $max_zoom_level -resolution 1 \
 	-orient horizontal -variable zoom.level -command scale_zoom
-label .zoom_value -anchor center -textvariable zoom.level -width 4 \
+label .zoom.value -anchor center -textvariable zoom.level -width 4 \
 	-relief sunken
-pack .zoom_value -in .zoom -side right
-pack .zoom_scale -in .zoom -side left -fill x -expand 1
+pack .zoom.value -side right
+pack .zoom.scale -side left -fill x -expand 1
 
 proc scale_zoom {zoom} {
   set tmax [expr (1<<$zoom)-1]
@@ -1032,7 +1035,7 @@ proc scale_zoom {zoom} {
     eval tooltip $widget.ymaxe "\$${item}_ymax"
   }
   set count [expr $tmax+1]
-  tooltip .zoom_scale [mc t25 $tmax $count $count]
+  tooltip .zoom.scale [mc t25 $tmax $count $count]
 
   # Shrink tiles range to valid range
   while {1} {
@@ -1045,7 +1048,7 @@ proc scale_zoom {zoom} {
   }
 
   # Recalculate tile numbers or coordinate values
-  if {[.xyrange_values current] == 0} {
+  if {[.xyrange.values current] == 0} {
     set type tiles
   } else {
     set type coord
@@ -1057,7 +1060,7 @@ proc scale_zoom {zoom} {
   }
 }
 
-bind .xyrange_values <<ComboboxSelected>> switch_xyrange
+bind .xyrange.values <<ComboboxSelected>> switch_xyrange
 switch_xyrange
 
 # Validate tile numbers
@@ -1154,12 +1157,12 @@ scale_zoom ${zoom.level}
 if {![file isdirectory ${tiles.folder}]} {set tiles.folder $cwd}
 labelframe .tiles_folder -labelanchor nw -text [mc l31]:
 pack .tiles_folder -in .r -fill x -expand 1 -pady 1
-entry .tiles_folder_value -textvariable tiles.folder \
+entry .tiles_folder.value -textvariable tiles.folder \
 	-state readonly -takefocus 0 -highlightthickness 0
-button .tiles_folder_button -style Arrow.TButton \
+button .tiles_folder.button -style Arrow.TButton \
 	-image ArrowDown -command choose_tiles_folder
-pack .tiles_folder_button -in .tiles_folder -side right -fill y
-pack .tiles_folder_value -in .tiles_folder -side left -fill x -expand 1
+pack .tiles_folder.button -side right -fill y
+pack .tiles_folder.value -side left -fill x -expand 1
 
 proc choose_tiles_folder {} {
   set folder [tk_chooseDirectory -parent . -initialdir ${::tiles.folder} \
@@ -1174,10 +1177,10 @@ proc choose_tiles_folder {} {
 
 labelframe .tiles_prefix -labelanchor w -text [mc l33]:
 pack .tiles_prefix -in .r -expand 1 -fill x -pady {2 1}
-entry .tiles_prefix_value -textvariable tiles.prefix -width 25 -justify left
-pack .tiles_prefix_value -in .tiles_prefix -side right
+entry .tiles_prefix.value -textvariable tiles.prefix -width 25 -justify left
+pack .tiles_prefix.value -side right
 
-.tiles_prefix_value configure -validate key -vcmd {
+.tiles_prefix.value configure -validate key -vcmd {
   if {%d < 1} {return 1}
   return [regexp {^(\w+[-.]?)*$} %P]
 }
@@ -1398,15 +1401,13 @@ if {![file isdirectory ${dem.folder}]} {set dem.folder ""}
 labelframe .shading.dem_folder -labelanchor nw -text [mc l81]:
 tooltip .shading.dem_folder [mc l81t]
 pack .shading.dem_folder -fill x -expand 1 -pady 1
-entry .shading.dem_folder_value -textvariable dem.folder \
+entry .shading.dem_folder.value -textvariable dem.folder \
 	-state readonly -takefocus 0 -highlightthickness 0
-tooltip .shading.dem_folder_value [mc l81t]
-button .shading.dem_folder_button -style Arrow.TButton \
+tooltip .shading.dem_folder.value [mc l81t]
+button .shading.dem_folder.button -style Arrow.TButton \
 	-image ArrowDown -command choose_dem_folder
-pack .shading.dem_folder_button -in .shading.dem_folder \
-	-side right -fill y
-pack .shading.dem_folder_value -in .shading.dem_folder \
-	-side left -fill x -expand 1
+pack .shading.dem_folder.button -side right -fill y
+pack .shading.dem_folder.value -side left -fill x -expand 1
 
 proc choose_dem_folder {} {
   set folder [tk_chooseDirectory -parent . -initialdir ${::dem.folder} \
@@ -1427,8 +1428,7 @@ combobox .shading.algorithm.values -width 12 \
 	-textvariable shading.algorithm -values $list
 if {[.shading.algorithm.values current] < 0} \
 	{.shading.algorithm.values current 0}
-pack .shading.algorithm.values -in .shading.algorithm \
-	-side right -anchor e -expand 1
+pack .shading.algorithm.values -side right -anchor e -expand 1
 
 # Hillshading algorithm parameters
 
@@ -1443,15 +1443,14 @@ entry .shading.simple.value2 -textvariable shading.simple.scale \
 set .shading.simple.value2.minmax {0 10 0.666}
 tooltip .shading.simple.value2 "0 ≤ [mc l85] ≤ 10"
 pack .shading.simple.value1 .shading.simple.label2 .shading.simple.value2 \
-	-in .shading.simple -side left -anchor w -expand 1 -fill x -padx {5 0}
+	-side left -anchor w -expand 1 -fill x -padx {5 0}
 
 labelframe .shading.diffuselight -labelanchor w -text [mc l86]:
 entry .shading.diffuselight.value -textvariable shading.diffuselight.angle \
 	-width 8 -justify right
 set .shading.diffuselight.value.minmax {0 90 50.}
 tooltip .shading.diffuselight.value "0° ≤ [mc l86] ≤ 90°"
-pack .shading.diffuselight.value -in .shading.diffuselight \
-	-side right -anchor e -expand 1
+pack .shading.diffuselight.value -side right -anchor e -expand 1
 
 frame .shading.asy
 foreach i {0 1 2} {
@@ -1480,7 +1479,7 @@ entry .shading.magnitude.value -textvariable shading.magnitude \
 	-width 8 -justify right
 set .shading.magnitude.value.minmax {0 4 1.}
 tooltip .shading.magnitude.value "0 ≤ [mc l87] ≤ 4"
-pack .shading.magnitude.value -in .shading.magnitude -anchor e -expand 1
+pack .shading.magnitude.value -anchor e -expand 1
 
 # Theme's hillshading zoom
 
@@ -1676,25 +1675,23 @@ pack .server.info
 
 labelframe .server.jre_version -labelanchor w -text [mc x02]:
 pack .server.jre_version -expand 1 -fill x -pady 1
-label .server.jre_version_value -anchor e -textvariable java_string
-pack .server.jre_version_value -in .server.jre_version \
-	-side right -anchor e -expand 1
+label .server.jre_version.value -anchor e -textvariable java_string
+pack .server.jre_version.value -side right -anchor e -expand 1
 
 # Mapsforge server version
 
 labelframe .server.version -labelanchor w -text [mc x03]:
 pack .server.version -expand 1 -fill x -pady 1
-label .server.version_value -anchor e -textvariable server_string
-pack .server.version_value -in .server.version \
-	-side right -anchor e -expand 1
+label .server.version.value -anchor e -textvariable server_string
+pack .server.version.value -side right -anchor e -expand 1
 
 # Mapsforge server version jar archive
 
 labelframe .server.jar -labelanchor nw -text [mc x04]:
 pack .server.jar -expand 1 -fill x -pady 1
-entry .server.jar_value -textvariable server_jar \
+entry .server.jar.value -textvariable server_jar \
 	-state readonly -takefocus 0 -highlightthickness 0
-pack .server.jar_value -in .server.jar -expand 1 -fill x
+pack .server.jar.value -expand 1 -fill x
 
 # Server configuration
 
@@ -1720,49 +1717,45 @@ foreach item $engines \
 set width [expr $width/[font measure TkTextFont "0"]+1]
 
 labelframe .server.engine -labelanchor nw -text [mc x12]:
-combobox .server.engine_values -width $width \
+combobox .server.engine.values -width $width \
 	-validate key -validatecommand {return 0} \
 	-textvariable rendering.engine -values $engines
-if {[.server.engine_values current] < 0} \
-	{.server.engine_values current 0}
+if {[.server.engine.values current] < 0} \
+	{.server.engine.values current 0}
 if {[llength $engines] > 1} {
   pack .server.engine -expand 1 -fill x -pady 1
-  pack .server.engine_values -in .server.engine \
-	-anchor e -expand 1 -fill x
+  pack .server.engine.values -anchor e -expand 1 -fill x
 }
 
 # Server interface
 
 labelframe .server.interface -labelanchor w -text [mc x13]:
-combobox .server.interface_values -width 10 \
+combobox .server.interface.values -width 10 \
 	-textvariable tcp.interface -values {localhost all}
-if {[.server.interface_values current] < 0} \
-	{.server.interface_values current 0}
+if {[.server.interface.values current] < 0} \
+	{.server.interface.values current 0}
 pack .server.interface -expand 1 -fill x -pady {6 2}
-pack .server.interface_values -in .server.interface \
-	-side right -anchor e -expand 1 -padx {3 0}
+pack .server.interface.values -side right -anchor e -expand 1 -padx {3 0}
 
 # Server TCP port number
 
 labelframe .server.port -labelanchor w -text [mc x15]:
-entry .server.port_value -textvariable tcp.port \
+entry .server.port.value -textvariable tcp.port \
 	-width 6 -justify center
-set .server.port_value.minmax "1024 65535 $tcp_port"
-tooltip .server.port_value "1024 ≤ [mc x15] ≤ 65535"
+set .server.port.value.minmax "1024 65535 $tcp_port"
+tooltip .server.port.value "1024 ≤ [mc x15] ≤ 65535"
 pack .server.port -expand 1 -fill x -pady 1
-pack .server.port_value -in .server.port \
-	-side right -anchor e -expand 1 -padx {3 0}
+pack .server.port.value -side right -anchor e -expand 1 -padx {3 0}
 
 # Maximum size of TCP listening queue
 
 labelframe .server.maxconn -labelanchor w -text [mc x16]:
-entry .server.maxconn_value -textvariable tcp.maxconn \
+entry .server.maxconn.value -textvariable tcp.maxconn \
 	-width 6 -justify center
-set .server.maxconn_value.minmax {0 {} 1024}
-tooltip .server.maxconn_value "[mc x16] ≥ 0"
+set .server.maxconn.value.minmax {0 {} 1024}
+tooltip .server.maxconn.value "[mc x16] ≥ 0"
 pack .server.maxconn -expand 1 -fill x -pady 1
-pack .server.maxconn_value -in .server.maxconn \
-	-side right -anchor e -expand 1 -padx {3 0}
+pack .server.maxconn.value -side right -anchor e -expand 1 -padx {3 0}
 
 # Enable/disable server request logging
 
@@ -1776,13 +1769,13 @@ tooltip .server.reset [mc b92t]
 pack .server.reset -pady {5 0}
 
 proc reset_server_values {} {
-  foreach widget {.server.port_value .server.maxconn_value} \
+  foreach widget {.server.port.value .server.maxconn.value} \
 	{set ::[$widget cget -textvariable] [lindex [set ::$widget.minmax] 2]}
-  .server.engine_values current 0
-  .server.interface_values set $::interface
+  .server.engine.values current 0
+  .server.interface.values set $::interface
 }
 
-foreach widget {.server.port_value .server.maxconn_value} {
+foreach widget {.server.port.value .server.maxconn.value} {
   $widget configure -validate all -vcmd {validate_number %W %V %P " " int}
   bind $widget <Shift-ButtonRelease-1> \
 	{set [%W cget -textvariable] [lindex ${::%W.minmax} 2]}
@@ -1794,7 +1787,7 @@ foreach widget {.server.port_value .server.maxconn_value} {
 # Get list of attributes from given xml element
 
 proc get_element_attributes {name string} {
-  lappend attributes name $name
+  set attributes {}
   regsub ".*<$name\\s+(.*?)\\s*/?>.*" $string {\1} string
   set items [regsub -all {(\S+?)\s*=\s*(".*?"|'.*?')} $string {{\1=\2}}]
   foreach item $items \
@@ -1832,23 +1825,41 @@ proc update_theme_styles_overlays {} {
   destroy [winfo children .overlays]
 
   set theme ${::theme.selection}
-  if {[regexp {^\(.*\)$} $theme]} {
-    # Built-in themes have no style: nothing to do
-    # Built-in themes have hillshading: enable hillshading configuration
-    .shading.onmap configure -state normal
-    set menu_first -1
-  } elseif {![file exists $::themes_folder/$theme]} {
+  if {![regexp {^\(.*\)$} $theme] && ![file exists $::themes_folder/$theme]} {
     # Theme file no longer exists, use built-in default
     set ::theme.selection [lindex $::themes 0]
+  }
+
+  # Read theme from server's assets or from file
+
+  if {[regexp {^\(.*\)$} $theme]} {
+    set rc [catch "package require zipfile::decode"]
+    if {!$rc} {
+      set file "assets/mapsforge/[string tolower [string trim $theme ()]].xml"
+      set rc [catch "zipfile::decode::open {$::server_jar}"]
+      if {!$rc} {
+	set dict [zipfile::decode::archive]
+	set rc [catch "zipfile::decode::getfile {$dict} {$file}" data]
+	zipfile::decode::close
+	if {$rc} {unset data} \
+	else {set data [encoding convertfrom utf-8 $data]}
+      }
+    }
+  } else {
+    set rc [catch "open {$::themes_folder/$theme} r" fd]
+    if {!$rc} {
+      set data [read $fd]
+      close $fd
+    }
+  }
+
+  if {![info exists data]} {
+    # No theme data
     .shading.onmap configure -state normal
     set menu_first -1
   } else {
-    # Read theme file
+    # Process theme
     set ::style.theme $theme
-    set theme_file $::themes_folder/$theme
-    set fd [open $theme_file r]
-    set data [read $fd]
-    close $fd
 
     # Split into list of elements between "<" and ">"
     set elements [regexp -inline -all {<.*?>} $data]
@@ -1895,6 +1906,7 @@ proc update_theme_styles_overlays {} {
     set layer_data [lrange $menu_data $layer_first $layer_last]
     array unset layer
     array set layer [get_element_attributes layer [lindex $layer_data 0]]
+    set layer(name) $layer(id)
 
     # Find layer's localized layer name
     set indices [lsearch -all -regexp $layer_data {<name\s+.*?>}]
@@ -1911,25 +1923,23 @@ proc update_theme_styles_overlays {} {
     }
 
     # Replace escaped characters within layer's name
-    if {[info exists layer(name)]} {
-      set s $layer(name)
-      set i 0
-      while {[regexp -start $i -indices {&.*?;} $s r]} {
-	set t [string range $s {*}$r]
-	switch -glob [string range $t 1 end-1] {
-	  quot	{set t \"}
-	  amp	{set t \&}
-	  apos	{set t '}
-	  lt	{set t <}
-	  gt	{set t >}
-	  {#x[0-9A-Fa-f]*} {set t [subst \\U[string range $t 3 end-1]]}
-	  {#[0-9]*} {set t [subst \\U[format %x [string range $t 2 end-1]]]}
-	}
-	set s [string replace $s {*}$r $t]
-	set i [lindex $r 0]+1
+    set s $layer(name)
+    set i 0
+    while {[regexp -start $i -indices {&.*?;} $s r]} {
+      set t [string range $s {*}$r]
+      switch -glob [string range $t 1 end-1] {
+	quot	{set t \"}
+	amp	{set t \&}
+	apos	{set t '}
+	lt	{set t <}
+	gt	{set t >}
+	{#x[0-9A-Fa-f]*} {set t [subst \\U[string range $t 3 end-1]]}
+	{#[0-9]*} {set t [subst \\U[format %x [string range $t 2 end-1]]]}
       }
-      set layer(name) $s
+      set s [string replace $s {*}$r $t]
+      set i [lindex $r 0]+1
     }
+    set layer(name) $s
 
     # Find layer's direct overlays
     set layer(overlays) {}
@@ -2003,8 +2013,8 @@ proc update_theme_styles_overlays {} {
   }
 
   # Fill style selection & select default style
-  .styles_values configure -values [lmap i ${::style.table} {lindex $i 1}]
-  .styles_values current \
+  .styles.values configure -values [lmap i ${::style.table} {lindex $i 1}]
+  .styles.values current \
 	[lsearch -exact -index 0 ${::style.table} $defaultstyle]
 
   # Show style selection
@@ -2017,7 +2027,7 @@ proc update_theme_styles_overlays {} {
 proc update_overlays_selection {} {
   destroy [winfo children .overlays]
   if {![info exists ::style.table]} return
-  set style [lindex ${::style.table} [.styles_values current]]
+  set style [lindex ${::style.table} [.styles.values current]]
   set style_id [lindex $style 0]
   set parent [string tolower .overlays.$style_id]
   frame $parent
@@ -2096,7 +2106,7 @@ proc select_style_overlays {style_id select} {
 
 proc get_selected_style_overlays {} {
   if {![info exists ::style.table]} return
-  set style_index [.styles_values current]
+  set style_index [.styles.values current]
   set style [lindex ${::style.table} $style_index]
   set style_id [lindex $style 0]
   set overlays [lindex $style 2]
@@ -2112,7 +2122,7 @@ proc get_selected_style_overlays {} {
 proc save_theme_settings {} {
   if {![info exists ::style.table]} return
   set theme ${::style.theme}
-  set style_index [.styles_values current]
+  set style_index [.styles.values current]
   set style [lindex ${::style.table} $style_index]
   set style_id [lindex $style 0]
   set file "$::ini_folder/theme.[regsub -all {/} $theme {.}].ini"
@@ -2131,7 +2141,7 @@ proc save_theme_settings {} {
 
 # Enable styles & overlays selection
 
-bind .themes_values <<ComboboxSelected>> update_theme_selection
+bind .themes.values <<ComboboxSelected>> update_theme_selection
 update_theme_selection
 
 # --- End of theme file processing
@@ -2156,7 +2166,7 @@ proc save_global_settings {} {
 # Save application dependent settings to folder ini_folder
 
 proc save_tiles_settings {} {
-  set ::xyrange.mode [.xyrange_values current]
+  set ::xyrange.mode [.xyrange.values current]
   save_settings $::ini_folder/tiles.ini \
 	tiles.folder tiles.prefix xyrange.mode zoom.level \
 	tiles.xmin tiles.xmax tiles.ymin tiles.ymax \
@@ -2223,13 +2233,13 @@ proc incr_font_size {incr} {
   }
   update idletasks
 
-  foreach item {.themes_values .styles_values \
-	.xyrange_values .shading.algorithm.values \
-	.server.engine_values .server.interface_values} \
+  foreach item {.themes.values .styles.values \
+	.xyrange-values .shading.algorithm.values \
+	.server.engine.values .server.interface.values} \
 	{if {[winfo exists $item]} {$item configure -justify left}}
   foreach item {.effects.user_scale .effects.text_scale \
 	.effects.symbol_scale .effects.line_scale \
-	.effects.gamma_scale .effects.contrast_scale .zoom_scale} \
+	.effects.gamma_scale .effects.contrast_scale .zoom.scale} \
 	{if {[winfo exists $item]} {$item configure -width $height}}
   foreach item {. .overlays .shading .effects .server} \
 	{resize_toplevel_window $item}
@@ -2415,22 +2425,21 @@ proc srv_start {} {
     set params {}
 
     if {$task == "Map" && $map == 1} {
-      set language [.lang_value get]
+      set language [.lang.value get]
       if {$language != ""} {lappend params language $language}
       set map_list [lmap item ${::maps.selection} {set map $::maps_folder/$item}]
       lappend params mapfiles [join $map_list ,]
       if {${::maps.world} == 1} {lappend params worldmap true}
-      set theme [.themes_values get]
+      set theme [.themes.values get]
       if {[regexp {^\(.*\)$} $theme]} {
 	lappend params themefile [string trim $theme ()]
       } else {
-	set theme_file $::themes_folder/$theme
-	lappend params themefile $theme_file
-	lassign [get_selected_style_overlays] style_id overlay_ids
-	if {$style_id != ""} {
-	  lappend params style $style_id
-	  lappend params overlays [join $overlay_ids ,]
-	}
+	lappend params themefile $::themes_folder/$theme
+      }
+      lassign [get_selected_style_overlays] style_id overlay_ids
+      if {$style_id != ""} {
+	lappend params style $style_id
+	lappend params overlays [join $overlay_ids ,]
       }
       lappend params gamma-correction ${::maps.gamma}
       lappend params contrast-stretch ${::maps.contrast}
