@@ -1,3 +1,11 @@
+2025-10-14
+
+- Adding internal render themes dynamically from current server's assets
+- Improved internal render themes and their overlays handling
+- Setting an operating system-dependent temporary directory environment 
+  for use by script and internally called applications
+- Added french translation (Help with translation errors is welcome!)
+
 2025-10-06
 
 - Added overlay selection for internal render themes

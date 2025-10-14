@@ -25,7 +25,7 @@ if {[encoding system] != "utf-8"} {
 if {![info exists tk_version]} {package require Tk}
 wm withdraw .
 
-set version "2025-10-06"
+set version "2025-10-14"
 set script [file normalize [info script]]
 set title [file tail $script]
 
@@ -35,7 +35,7 @@ set cwd [pwd]
 
 # Required packages
 
-foreach item {Thread msgcat tooltip http} {
+foreach item {Thread msgcat tooltip http zipfile::decode} {
   if {[catch "package require $item"]} {
     ::tk::MessageBox -title $title -icon error \
 	-message "Could not load required Tcl package '$item'" \
@@ -316,21 +316,14 @@ cd $cwd
 # Check operating system
 
 if {$tcl_platform(os) == "Windows NT"} {
-  if {$language == ""} {
-    package require registry
-    set language [registry get \
-	{HKEY_CURRENT_USER\Control Panel\International} {LocaleName}]
-    set language [regsub {(.*)-(.*)} $language {\1}]
-  }
+  package require registry
   if {![info exists env(TMP)]} {set env(TMP) $env(HOME)]}
+  append env(TMP) \\[format "TMS%8.8x" [pid]]
   set tmpdir [file normalize $env(TMP)]
   set nprocs $env(NUMBER_OF_PROCESSORS)
 } elseif {$tcl_platform(os) == "Linux"} {
-  if {$language == ""} {
-    set language [regsub {(.*)_(.*)} $env(LANG) {\1}]
-    if {$env(LANG) == "C"} {set language en}
-  }
   if {![info exists env(TMPDIR)]} {set env(TMPDIR) /tmp}
+  append env(TMPDIR) /[format "TMS%8.8x" [pid]]
   set tmpdir $env(TMPDIR)
   set nprocs [exec /usr/bin/nproc]
 } else {
@@ -784,19 +777,22 @@ set maps [lsort -dictionary $maps]
 if {[llength $maps] == 0} {error_message [mc e11] exit}
 
 # Get list of available Mapsforge themes
-# and add Mapsforge built-in themes
+# and add Mapsforge server's built-in themes
 
 cd $themes_folder
 set themes [find_files "" "*.xml"]
 cd $cwd
-lappend themes (OSMARENDER)
-if {$server_version >= 260100} {
-  lappend themes (BIKER) (DARK) (INDIGO) (MOTORIDER)
-} elseif {$server_version >= 250000} {
-  lappend themes (BIKER) (MOTORIDER)
-} elseif {$server_version >= 220000} {
-  lappend themes (MOTORIDER) (MOTORIDER_DARK)
+
+zipfile::decode::open $server_jar
+set dict [zipfile::decode::archive]
+set list [zipfile::decode::files $dict]
+foreach item [lsearch -inline -all $list "assets/mapsforge/*.xml"] {
+  zipfile::decode::copyfile $dict $item $tmpdir/$item
+  set item ([string toupper [file rootname [file tail $item]]])
+  if {$item != "(DEFAULT)" && $item != "(HILLSHADING)"} {lappend themes $item}
 }
+zipfile::decode::close
+
 set themes [lsort -dictionary $themes]
 set themes [linsert $themes 0 (DEFAULT)]
 
@@ -824,6 +820,7 @@ pack .l -side left -anchor nw
 
 # Preferred maps language (2 lowercase letters ISO 639-1 code)
 
+if {$language == ""} {set language $locale}
 if {![info exists maps.language]} {set maps.language $language}
 labelframe .lang -labelanchor w -text [mc l11]:
 pack .lang -in .l -expand 1 -fill x -pady 1
@@ -949,7 +946,7 @@ pack .r -anchor nw
 
 labelframe .xyrange -labelanchor w -text [mc l21]:
 pack .xyrange -in .r -expand 1 -fill x -pady 1
-combobox .xyrange.values -width 18 -values [list [mc v22] [mc v23]] \
+combobox .xyrange.values -width 24 -values [list [mc v22] [mc v23]] \
 	-validate key -validatecommand {return 0}
 if {[info exists xyrange.mode]} {.xyrange.values current ${::xyrange.mode}}
 if {[.xyrange.values current] < 0} {.xyrange.values current 0}
@@ -1490,14 +1487,14 @@ checkbutton .shading.zoom.min_apply -text [mc l891]: \
 entry .shading.zoom.min_value -textvariable shading.zoom.min.value \
 	-width 8 -justify right
 set .shading.zoom.min_value.minmax {0 25 9}
-tooltip .shading.zoom.min_value "0 ≤ [mc l891] ≤ 25"
+tooltip .shading.zoom.min_value "0 ≤ [mc l891] ≤ [mc l892]"
 checkbutton .shading.zoom.max_apply -text [mc l892]: \
 	-variable shading.zoom.max.apply \
 	-onvalue true -offvalue false -command update_shading_zoom_levels
 entry .shading.zoom.max_value -textvariable shading.zoom.max.value \
 	-width 8 -justify right
 set .shading.zoom.max_value.minmax {0 25 17}
-tooltip .shading.zoom.max_value "0 ≤ [mc l892] ≤ 25"
+tooltip .shading.zoom.max_value "[mc l891] ≤ [mc l892] ≤ 25"
 
 set row 0
 foreach item {min max} {
@@ -1824,33 +1821,19 @@ proc update_theme_styles_overlays {} {
   save_theme_settings
   destroy [winfo children .overlays]
 
-  set theme ${::theme.selection}
-  if {![regexp {^\(.*\)$} $theme] && ![file exists $::themes_folder/$theme]} {
-    # Theme file no longer exists, use built-in default
-    set ::theme.selection [lindex $::themes 0]
-  }
-
   # Read theme from server's assets or from file
 
+  set theme ${::theme.selection}
   if {[regexp {^\(.*\)$} $theme]} {
-    set rc [catch "package require zipfile::decode"]
-    if {!$rc} {
-      set file "assets/mapsforge/[string tolower [string trim $theme ()]].xml"
-      set rc [catch "zipfile::decode::open {$::server_jar}"]
-      if {!$rc} {
-	set dict [zipfile::decode::archive]
-	set rc [catch "zipfile::decode::getfile {$dict} {$file}" data]
-	zipfile::decode::close
-	if {$rc} {unset data} \
-	else {set data [encoding convertfrom utf-8 $data]}
-      }
-    }
+    set file [string tolower [string trim $theme ()]].xml
+    set file $::tmpdir/assets/mapsforge/$file
   } else {
-    set rc [catch "open {$::themes_folder/$theme} r" fd]
-    if {!$rc} {
-      set data [read $fd]
-      close $fd
-    }
+    set file $::themes_folder/$theme
+  }
+
+  if {![catch "open {$file} r" fd]} {
+    set data [read $fd]
+    close $fd
   }
 
   if {![info exists data]} {
@@ -1914,7 +1897,7 @@ proc update_theme_styles_overlays {} {
       array unset name
       array set name [get_element_attributes name [lindex $layer_data $index]]
       if {![info exists name(lang)]} continue
-      if {$name(lang) == $::language} {
+      if {$name(lang) == $::locale} {
 	set layer(name) $name(value)
 	break
       } elseif {$name(lang) == $defaultlang} {
@@ -2975,7 +2958,7 @@ proc run_render_job {} {
   }
   close $fd
 
-  set args "montage -mode concatenate -tile ${xcount}x${ycount} @$batch_file $composed.png"
+  set args "montage -mode concatenate -tile ${xcount}x${ycount} {@$batch_file} $composed.png"
   cputs "> [file tail $exe] $args"
   set fderr [file tempfile]
   lassign [pipe_run $exe {*}$args 2>@ $fderr] rc result
@@ -3065,6 +3048,7 @@ while {1} {
   vwait action
   if {$action == 0} {
     foreach item {global theme shading tiles} {save_${item}_settings}
+    catch {file delete -force $tmpdir}
     exit
   }
   unset action
@@ -3073,7 +3057,6 @@ while {1} {
 
 # Create server's temporary files folder
 
-append tmpdir /[format "TMS%8.8x" [pid]]
 file mkdir $tmpdir/tasks
 
 # Create server logging properties

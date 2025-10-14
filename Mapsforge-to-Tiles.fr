@@ -1,0 +1,166 @@
+# Script's French localized text strings
+
+# Rules:
+# message label must exactly match message label in script
+# followed by localized text string
+
+# Documentation:
+# https://www.tcl-lang.org/man/tcl/TclCmd/msgcat.htm
+
+# ISO 639-1 code for French language: fr
+set iso_639_1 "fr"
+
+::msgcat::mcmset $iso_639_1 {	# Begin of translations
+
+i00	"Erreur lors de la lecture des paramètres utilisateur\nà partir du fichier '%s'"
+i01	"Les paramètres utilisateur requis sont manquants,\nfichier '%s' introuvable"
+
+l01	"Mapsforge en Tuiles"
+
+l11	"Langue préférée des cartes Mapsforge"
+l11t	"2 lettres minuscules code ISO 639-1\nLangues des cartes prises en charge voir la console de sortie"
+l13	"Dossier de cartes Mapsforge"
+l14	"Carte(s) Mapsforge"
+l14t	"Le bouton 1 de la souris sélectionne une carte\net désélectionne toutes les autres.\nMaj + bouton 1 de la souris étend la sélection.\nCtrl + bouton 1 de la souris bascule la sélection."
+l15	"Ajouter la carte Mapsforge du monde"
+l16	"Dossier de thème Mapsforge"
+l17	"Thème Mapsforge"
+l18	"Style du thème"
+
+e01	"%s '%s'\navec l'ID de processus %d est déjà en cours d'exécution"
+e02	"Terminer le processus avec «kill» et redémarrer?"
+e03	"Système opérateur non pris en charge"
+e04	"La commande '%s'\ndéfinie par la variable '%s' n'est pas exécutable"
+e05	"Le dossier/fichier '%s'\ndéfini par la variable '%s' n'existe pas"
+e07	"La version %s est '%s'.\nAu moins la version '%s' est requise!"
+e08	"Impossible de déterminer la version %s à partir de la sortie de commande!\n\nCommande:\n%s\nSortie:\n%s"
+e09	"Ni le programme «gm» de «GraphicsMagick» ni le programme «magick» de «ImageMagick» n'ont été trouvés!"
+e10	"Programme «curl» n'est pas trouvé!"
+e11	"Aucune carte Mapsforge trouvée"
+
+c01	"Sélection des superpositions pour le style"
+c02	"Configurer l'ombrage du relief"
+c03	"Mise à l'échelle et couleurs"
+c04	"Configurer le serveur"
+
+s01	"Mise à l'échelle des éléments cartographiques"
+s02	"Tous les éléments"
+s03	"Étiquettes"
+s04	"Symboles"
+s05	"Lignes"
+
+s06	"Post-traitement des couleurs"
+s07	"Correction gamma"
+s08	"Étendre le contraste"
+
+x01	"Informations sur le serveur"
+x02	"Version d'exécutable Java"
+x03	"Version du serveur Mapsforge"
+x04	"Archive Java du serveur"
+
+x11	"Configuration du serveur"
+x12	"Moteur de rendu"
+x13	"Interface(s) réseau"
+x15	"Port TCP"
+x16	"Taille de la file d'attente d'acceptation TCP"
+x19	"Journalisation des requêtes du serveur"
+
+b01	"Démarrer"
+b02	"Quitter"
+b03	"Annuler"
+
+l21	"Plage XY par"
+l22	"Numéros de tuiles"
+l23	"Valeurs des coordonnées"
+l24	"Niveau de zoom"
+
+v22	"numéros de tuiles"
+v23	"valeurs des coordonnées"
+
+t21	"tuile %s bord gauche à %s W"
+t22	"tuile %s bord droit à %s E"
+t23	"tuile %s bord supérieur à %s N"
+t24	"tuile %s bord inférieur à %s S"
+t25	"Numéros de tuiles de 0 à %d dans la direction X et Y,\n%d * %d tuiles couvrent le monde entier"
+
+l31	"Dossier de tuiles"
+l32	"Choisir le dossier des tuiles"
+l33	"Préfixe du nom de fichier"
+
+c32	"Utiliser '%s' pour le traitement de l'image"
+c32t	"'%s' n'est pas disponible!"
+c33	"Composer des tuiles dans un fichier image"
+c34	"Conserver les fichiers de tuiles après la composition"
+c35	"Afficher l'image composée une fois terminée"
+
+e41	"Aucune carte Mapsforge sélectionnée"
+e42	"%d numéro(s) de tuile(s) non spécifié(s)"
+e43	"Nombre(s) de tuiles minimum > nombre(s) de tuiles maximum"
+e44	"Le dossier de tuiles '%s' n'est pas accessible en écriture"
+e45	"Dossier DEM manquant ou invalide"
+
+m51	"Processus %d (%s) démarré"
+m52	"Processus %d (%s) terminé"
+m53	"Processus %d (%s) terminé par «kill»"
+m54	"Démarrage %s"
+m55	"Fin inattendue de %s"
+m59	"%s n'est pas démarré.\nLe port TCP '%s' n'est pas disponible:\n%s"
+
+m61	"Tuiles de rendu"
+m63	"Plage de numéros de tuiles"
+m64	"Plage de valeurs de coordonnées"
+m65	"longitude"
+m66	"latitude"
+m67	"%s tuiles à rendre dans la direction %s"
+m68	"nombre total de tuiles"
+m69	"Plus de %d tuiles! Continuer quand même?"
+
+m70	"Télécharger en utilisant le modèle d'URL '%s'"
+m71	"Écrire les tuiles sous forme de fichiers PNG dans le dossier '%s'"
+m72	"Demandé: %d tuiles, reçu: %d tuiles"
+m73a	"Téléchargement annulé"
+m73b	"Le téléchargement s'est terminé anormalement, voir le fichier journal '%s'"
+m74	"'%s' s'est terminé anormalement: '%s'"
+m75	"Durée totale %s ms pour %s tuiles"
+m76	"Temps moyen %s ms pour 1 tuile"
+m77	"pour le rendu et le téléchargement"
+m78	"Composer des tuiles dans le fichier image '%s'"
+m81	"L'image composée '%s' a été écrite"
+m82	"La composition des tuiles dans le fichier image a échoué"
+m83	"Tuiles supprimées"
+m84	"Composer des tuiles de carte et des tuiles d'ombrage"
+m85	"Temps %d ms"
+
+c80	"Activer l'ombrage du relief"
+c81	"Ombrage sur la carte"
+c81t	"L'ombrage doit être activé\ndans le thème Mapsforge"
+c82	"Ombrage comme carte"
+
+l81	"Dossier DEM (Digital Elevation Model)"
+l81t	"Fichiers HGT avec données d'altitude et/ou\narchives ZIP contenant un fichier HGT portant le même nom.\nExemple: archive N49E008.zip contenant le fichier N49E008.hgt"
+l82	"Choisissez le dossier DEM"
+l83	"Algorithme"
+l84	"Linéarité"
+l85	"Mise à l'échelle"
+l86	"Angle d'élévation de la source lumineuse"
+l87	"Mise à l'échelle de la taille de la valeur de gris"
+l880	"Facteur d'asymétrie"
+l881	"Pente minimale"
+l882	"Pente maximale"
+l885	"Prétraiter les valeurs d'altitude non valides"
+l891	"Niveau de zoom minimum"
+l892	"Niveau de zoom maximum"
+
+b91	"Tout"
+b91t	"Sélectionner tout"
+b92	"Réinit"
+b92t	"Réinitialiser aux\nvaleurs par défaut"
+b93	"Rien"
+b93t	"Désélectionner tout"
+
+l99	"Console de sortie"
+c99	"Afficher la console de sortie"
+m99	"La console de sortie peut maintenant être fermée!"
+
+};	# Do not remove: end of translations
+	# Do not remove: end of file (Ctrl+Z)
