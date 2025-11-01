@@ -25,7 +25,7 @@ if {[encoding system] != "utf-8"} {
 if {![info exists tk_version]} {package require Tk}
 wm withdraw .
 
-set version "2025-10-14"
+set version "2025-11-01"
 set script [file normalize [info script]]
 set title [file tail $script]
 
@@ -330,6 +330,12 @@ if {$tcl_platform(os) == "Windows NT"} {
   error_message [mc e03 $tcl_platform(os)] exit
 }
 
+# Create temporary files folder and delete on exit
+
+file mkdir $tmpdir
+rename ::exit ::quit
+proc exit {args} {catch {file delete -force $::tmpdir}; eval quit $args}
+
 # Restore saved settings from folder ini_folder
 
 if {![info exists ini_folder]} {set ini_folder $env(HOME)/.Mapsforge}
@@ -571,15 +577,15 @@ proc get_shell_command {command} {
 
 foreach item {java_cmd} {
   set value [set $item]
-  if {$value == ""} {error_message [mc e04 $value $item] exit}
+  if {$value == ""} {error_message [mc e04 $value $item] quit}
 }
 foreach item {server_jar} {
   set value [set $item]
-  if {![file isfile $value]} {error_message [mc e05 $value $item] exit}
+  if {![file isfile $value]} {error_message [mc e05 $value $item] quit}
 }
 foreach item {maps_folder themes_folder} {
   set value [set $item]
-  if {![file isdirectory $value]} {error_message [mc e05 $value $item] exit}
+  if {![file isdirectory $value]} {error_message [mc e05 $value $item] quit}
 }
 
 # Set minimum required Java version
@@ -628,9 +634,9 @@ if {!$rc} {
 }
 
 if {$rc || $java_version == 0} \
-  {error_message [mc e08 Java [get_shell_command $command] $result] exit}
+  {error_message [mc e08 Java [get_shell_command $command] $result] quit}
 if {$java_version < $java_version_min} \
-  {error_message [mc e07 Java $java_string $java_version_min] exit}
+  {error_message [mc e07 Java $java_string $java_version_min] quit}
 
 # Evaluate numeric Mapsforge server version
 # from output line ending with version string " version: x.y.z.c"
@@ -644,22 +650,22 @@ foreach line [split $result \n] {
   set server_string $data
   set data [split $data .]
   if {[llength $data] != 4} \
-    {error_message [mc e07 "Mapsforge Server" $server_string 0.21.0.0] exit}
+    {error_message [mc e07 "Mapsforge Server" $server_string 0.22.0.0] quit}
   foreach item $data {set server_version [expr 100*$server_version+$item]}
   break
 }
 
 if {$rc || $server_version == 0} \
-  {error_message [mc e08 Server [get_shell_command $command] $result] exit}
-if {$server_version < 210000} \
-  {error_message [mc e07 "Mapsforge Server" $server_string 0.21.0.0] exit}
+  {error_message [mc e08 Server [get_shell_command $command] $result] quit}
+if {$server_version < 220000} \
+  {error_message [mc e07 "Mapsforge Server" $server_string 0.22.0.0] quit}
 
 # Looking for installed URL tool "curl"
 
 set curl ""
 if {[info exists curl_cmd] && $curl_cmd != ""} {set curl $curl_cmd}
 if {$curl == ""} {set curl [lindex [auto_execok curl] 0]}
-if {$curl == ""} {error_message [mc e10] exit}
+if {$curl == ""} {error_message [mc e10] quit}
 
 catch {exec $curl -V} data
 set string [lindex [split $data] 1]
@@ -1416,9 +1422,8 @@ proc choose_dem_folder {} {
 
 labelframe .shading.algorithm -labelanchor w -text [mc l83]:
 pack .shading.algorithm -expand 1 -fill x -pady 2
-set list {}
+set list {stdasy simplasy hiresasy}
 if {$server_version >= 230001} {lappend list adaptasy}
-if {$server_version >= 220000} {lappend list stdasy simplasy hiresasy}
 lappend list simple diffuselight
 combobox .shading.algorithm.values -width 12 \
 	-validate key -validatecommand {return 0} \
@@ -3048,16 +3053,11 @@ while {1} {
   vwait action
   if {$action == 0} {
     foreach item {global theme shading tiles} {save_${item}_settings}
-    catch {file delete -force $tmpdir}
     exit
   }
   unset action
   if {[selection_ok]} break
 }
-
-# Create server's temporary files folder
-
-file mkdir $tmpdir/tasks
 
 # Create server logging properties
 
@@ -3069,6 +3069,10 @@ puts $fd "log4j.appender.stdout.Target=System.out"
 puts $fd "log4j.appender.stdout.layout=org.apache.log4j.PatternLayout"
 puts $fd "log4j.appender.stdout.layout.ConversionPattern=%d{yyyy-MM-dd HH:mm:ss.SSS} %m%n"
 close $fd
+
+# Create server's temporary files folder
+
+file mkdir $tmpdir/tasks
 
 # Run render job
 
@@ -3093,10 +3097,6 @@ while {$action == 1} {
   if {![info exists action]} {vwait action}
 }
 unset action
-
-# Delete temporary files folder
-
-catch {file delete -force $tmpdir}
 
 # Unmap main toplevel window
 

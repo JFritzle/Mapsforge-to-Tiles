@@ -23,7 +23,7 @@ l13	"Dossier de cartes Mapsforge"
 l14	"Carte(s) Mapsforge"
 l14t	"Le bouton 1 de la souris sélectionne une carte\net désélectionne toutes les autres.\nMaj + bouton 1 de la souris étend la sélection.\nCtrl + bouton 1 de la souris bascule la sélection."
 l15	"Ajouter la carte Mapsforge du monde"
-l16	"Dossier de thème Mapsforge"
+l16	"Dossier de thèmes Mapsforge"
 l17	"Thème Mapsforge"
 l18	"Style du thème"
 

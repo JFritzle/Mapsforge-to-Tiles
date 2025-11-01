@@ -1,3 +1,10 @@
+2025-11-01
+
+- Dropped support of server version < 0.22.0.0
+- Corrected some localized texts
+- Fixed possible script aborting when retrieving curl version
+- Minor script optimizations
+
 2025-10-14
 
 - Adding internal render themes dynamically from current server's assets
