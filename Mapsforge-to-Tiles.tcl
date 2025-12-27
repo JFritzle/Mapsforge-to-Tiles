@@ -25,7 +25,7 @@ if {[encoding system] != "utf-8"} {
 if {![info exists tk_version]} {package require Tk}
 wm withdraw .
 
-set version "2025-11-01"
+set version "2025-12-27"
 set script [file normalize [info script]]
 set title [file tail $script]
 
@@ -1802,6 +1802,7 @@ proc get_element_attributes {name string} {
 proc find_overlays_for_layer {layer_id layers} {
   set overlays {}
   set layer_index [lsearch -exact -index 0 $layers $layer_id]
+  if {$layer_index < 0} {return $overlays}
   array set layer [lindex $layers [list $layer_index 1]]
   if {[info exists layer(parent)]} \
 	{lappend overlays {*}[find_overlays_for_layer $layer(parent) $layers]}
@@ -1952,6 +1953,7 @@ proc update_theme_styles_overlays {} {
     set overlays {}
     foreach overlay_id [find_overlays_for_layer $layer(id) $layers] {
       set overlay_index [lsearch -exact -index 0 $layers $overlay_id]
+      if {$overlay_index < 0} continue
       array unset overlay_layer
       array set overlay_layer [lindex $layers [list $overlay_index 1]]
       if {![info exists overlay_layer(enabled)]} \

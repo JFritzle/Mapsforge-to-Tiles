@@ -1,3 +1,8 @@
+2025-12-27
+
+- Fixed script aborting on missing overlay layer in xml theme file
+- Minor README modifications
+
 2025-11-01
 
 - Dropped support of server version < 0.22.0.0
