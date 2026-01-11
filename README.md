@@ -13,7 +13,7 @@ Graphical user interface is a single script written in _Tcl/Tk_ scripting langua
 
 User settings file is named _Mapsforge-to-Tiles.ini_. A template file is provided.
 
-Resource files are named _Mapsforge-to-Tiles.<locale\>_, where _<locale\>_ matches locale’s 2 lowercase letters ISO 639-1 code. English localized resource file _Mapsforge-to-Tiles.en_, French localized resource file _Mapsforge-for-QMapShack.fr_ and German localized resource file _Mapsforge-to-Tiles.de_ are provided. Script can be easily localized to any other system’s locale by providing a corresponding resource file using English resource file as a template. 
+Resource files are named _Mapsforge-to-Tiles.<locale\>_, where _<locale\>_ matches locale’s 2 lowercase letters ISO 639-1 code. English localized resource file _Mapsforge-to-Tiles.en_, French localized resource file _Mapsforge-to-Tiles.fr_ and German localized resource file _Mapsforge-to-Tiles.de_ are provided. Script can be easily localized to any other system’s locale by providing a corresponding resource file using English resource file as a template. 
 
 Rendered tiles may optionally be composed to an image.
 
@@ -23,68 +23,72 @@ Screenshot of graphical user interface:
 
 ### Installation
 
-1.	Java runtime environment (JRE) or Java development kit (JDK)  
+1.	**Java runtime environment (JRE) or Java development kit (JDK)**  
 JRE version 11 or higher is required. JRE version 17 or higher is recommended.  
 Each JDK contains JRE as subset.  
-Windows: If not yet installed, download and install JRE or JDK, e.g. from [Oracle](https://www.java.com), [OpenLogic](https://www.openlogic.com/openjdk-downloads) or [Adoptium](https://adoptium.net/de/temurin/releases).  
-Linux: If not yet installed, install JRE or JDK using Linux package manager. (Ubuntu: _apt install openjdk-<version\>-jre_ or _apt install openjdk-<version\>-jdk_ with required or newer _<version\>_)
+**Windows**: If not yet installed, download and install JRE or JDK, e.g. from [Oracle](https://www.java.com), [OpenLogic](https://www.openlogic.com/openjdk-downloads) or [Adoptium](https://adoptium.net/de/temurin/releases).  
+**Linux**: If not yet installed, install JRE or JDK using Linux package manager.  
+(Ubuntu: _apt install openjdk-<version\>-jre_ or _apt install openjdk-<version\>-jdk_ with required or newer _<version\>_)  
+**macOS**: If not yet installed, install JDK using _Homebrew_ package manager by _brew install java_.  
 
-2.	Mapsforge tile server  
+2.	**Mapsforge tile server**  
 Open [mapsforgesrv releases](https://github.com/telemaxx/mapsforgesrv/releases).  
 Download most recently released jar file _mapsforgesrv-fatjar.jar_ from _<release\>\_for\_java11_tasks_ assets.  
-Windows: Copy downloaded jar file into Mapsforge tile server’s installation folder, e.g. into folder _%ProgramFiles%/MapsforgeSrv_.  
-Linux: Copy downloaded jar file into Mapsforge tile server’s installation folder, e.g. into folder _~/MapsforgeSrv_.  
-Note: Server version 0.22.0.0 or higher is required.  
+**Windows**: Copy downloaded jar file into Mapsforge tile server’s installation folder, e.g. into folder _%ProgramFiles%/MapsforgeSrv_.  
+**Linux** / **macOS**: Copy downloaded jar file into Mapsforge tile server’s installation folder, e.g. into folder _~/MapsforgeSrv_.  
+**Note**: Server version 0.22.0.0 or higher is required.  
 
-3. Alternative Marlin rendering engine (optional, recommended)  
+3. **Alternative Marlin rendering engine** (optional, recommended)  
 [Marlin](https://github.com/bourgesl/marlin-renderer) is an open source Java2D rendering engine optimized for performance, replacing the standard built into Java. Download is available at [Marlin-renderer releases](https://github.com/bourgesl/marlin-renderer/releases).  
 For JRE version lower than 17, download jar file _marlin-\*.jar_  
 from _Marlin-renderer \<latest version> for JDK11+_ section's assets.  
 For JRE version 17 or higher, download jar file _marlin-\*.jar_  
 from _Marlin-renderer \<latest version> for JDK17+_ section's assets.  
-Windows: Copy downloaded jar file into Mapsforge tile server’s installation folder, e.g. into folder _%ProgramFiles%/MapsforgeSrv_.  
-Linux: Copy downloaded jar file into Mapsforge tile server’s installation folder, e.g. into folder _~/MapsforgeSrv_.  
+**Windows**: Copy downloaded jar file into Mapsforge tile server’s installation folder, e.g. into folder _%ProgramFiles%/MapsforgeSrv_.  
+**Linux** / **macOS**: Copy downloaded jar file into Mapsforge tile server’s installation folder, e.g. into folder _~/MapsforgeSrv_.  
 
-4.	Tcl/Tk scripting language version 8.6 or higher binaries  
-Windows: Download and install latest stable version of Tcl/Tk, currently 9.0.  
+4.	**Tcl/Tk scripting language version 8.6 or higher binaries**  
+**Windows**: Download and install latest stable version of Tcl/Tk, currently 9.0.  
 See https://wiki.tcl-lang.org/page/Binary+Distributions for available binary distributions. Recommended Windows binary distribution is from [teclab’s tcltk](https://gitlab.com/teclabat/tcltk/-/packages) Windows repository. Select most recent installation file _tcltk90-9.0.\<x.y>.Win10.nightly.\<date>.tgz_. Unpack zipped tar archive (file extension _.tgz_) into your Tcl/Tk installation folder, e.g. _%ProgramFiles%/Tcl_.  
 Note: [7-Zip](https://www.7-zip.org) file archiver/extractor is able to unpack _.tgz_ archives.   
-Linux: Install packages _tcl, tcllib, tcl-thread, tk_ and _tklib_ using Linux package manager.  
-(Ubuntu: _apt install tcl tcllib tcl-thread tk tklib_)
+**Linux**: Install packages _tcl, tcllib, tcl-thread, tk_, _tklib_ and _x11-utils_ using Linux package manager. (Ubuntu: _apt install tcl tcllib tcl-thread tk tklib x11-utils_)  
+**macOS**: If not yet installed, install _tcl-tk_ using _Homebrew_ package manager by _brew install tcl-tk_. Advanced users can either download additionally required Tcl/Tk package _tklib0.9_ from [sourceforge.net](https://sourceforge.net/projects/tcllib/files/tklib/0.9) and install into folder _/usr/local/Cellar/tcl-tk/*/lib/tklib0.9_ or simply copy _tklib0.9_ folder from an existing Windows or Linux installation of Tcl/Tk.  
 
-5. GraphicsMagick and/or ImageMagick  
-At least one installation of either GraphicsMagick or ImageMagick is required!  
-Usually GraphicsMagick is faster than ImageMagick, especially with a large number of tiles.  
+5. **GraphicsMagick (gm)** and/or **ImageMagick (magick)**  
+At least one of either GraphicsMagick or ImageMagick is required! Usually GraphicsMagick is faster than ImageMagick, especially with a large number of tiles.  
 For performance reasons, Q8 variants of both graphics tools are strongly preferable over Q16 variants. Since Q16 variants internally work with 16-bit color values per pixel, each input file with 8-bit color values per pixel must be internally converted to 16-bit color values before processing, which consumes time, twice as much memory and disk space.  
-<br/>GraphicsMagick:  
-Windows: If not yet installed, download and install latest GraphicsMagick version from [download section](https://sourceforge.net/projects/graphicsmagick/files/graphicsmagick-binaries).  
+<br/>**GraphicsMagick**:  
+**Windows**: If not yet installed, download and install latest GraphicsMagick version from [download section](https://sourceforge.net/projects/graphicsmagick/files/graphicsmagick-binaries).  
 After installation, program _gm.exe_ is expected to be found in one of folders _C:\Program Files*\GraphicsMagick*_. An alternative installation path for _gm.exe_ can be specified in the ini file.  
-Linux: If not yet installed, install GraphicsMagick package using Linux package manager. (Ubuntu: _apt install graphicsmagick_)  
-Note: GraphicsMagick resource limits are hard-coded in Tcl script file, but can be adjusted in section _Set resource limits of GraphicsMagick_ if needed.  
-<br/>ImageMagick:  
+**Linux**: If not yet installed, install GraphicsMagick using Linux package manager. (Ubuntu: _apt install graphicsmagick_)  
+**macOS**: If not yet installed, install GraphicsMagick using _Homebrew_ package manager by _brew install graphicsmagick_. Program _gm_ is to be found as _/usr/local/bin/gm_.   
+**Note**: GraphicsMagick resource limits are hard-coded in Tcl script file, but can be adjusted in section _Set resource limits of GraphicsMagick_ if needed.  
+<br/>**ImageMagick**:  
 ImageMagick version 7 or newer is required! Versions older than version 7 do not include program _magick_ required for scripting.  
-Windows: If not yet installed, download and install latest ImageMagick version from [download section](https://imagemagick.org/script/download.php).  
+**Windows**: If not yet installed, download and install latest ImageMagick version from [download section](https://imagemagick.org/script/download.php).  
 After installation, program _magick.exe_ is expected to be found in one of folders _C:\Program Files*\ImageMagick*_. An alternative installation path for _magick.exe_ can be specified in the ini file.  
-Linux: If not yet installed, install ImageMagick package using Linux package manager. (Ubuntu: _apt install imagemagick_)  
+**Linux**: If not yet installed, install ImageMagick using Linux package manager. (Ubuntu: _apt install imagemagick_)  
 When Linux package managers do only install versions older than version 7 by default, then [installation from source](https://imagemagick.org/script/install-source.php) may be required. Default is to build Q16 variant. Use _./configure \-\-with-quantum-depth=8_ to build Q8 variant.  
-Note: ImageMagick resource limits are hard-coded in Tcl script file, but can be adjusted in section _Set resource limits of ImageMagick_ if needed.  
+**macOS**: If not yet installed, install ImageMagick using _Homebrew_ package manager by _brew install imagemagick_. Program _magick_ is to be found as _/usr/local/bin/magick_.   
+**Note**: ImageMagick resource limits are hard-coded in Tcl script file, but can be adjusted in section _Set resource limits of ImageMagick_ if needed.  
 
-6. curl  
+6. **curl**  
 If not yet available, installation of curl is required!  
-Windows: Starting with version 10, a suitable _curl_ is part of Windows and is to be found as _C:\Windows\System32\curl.exe_. If however desired, latest curl version is available at curl's [download section](https://curl.se/download.html). An alternative installation path for _curl.exe_ can be specified in the ini file.  
-Linux: If not yet installed, install curl package using Linux package manager. (Ubuntu: _apt install curl_)  
+**Windows**: Starting with version 10, a suitable _curl_ is part of Windows and is to be found as _C:\Windows\System32\curl.exe_. If however desired, latest curl version is available at curl's [download section](https://curl.se/download.html). An alternative installation path for _curl.exe_ can be specified in the ini file.  
+**Linux**: If not yet installed, install curl package using Linux package manager. (Ubuntu: _apt install curl_)  
+**macOS**: A suitable _curl_ is part of macOS and is to be found as _/usr/local/bin/curl_.  
 
-7. Mapsforge maps  
+7. **Mapsforge maps**  
 Download Mapsforge maps for example from [openandromaps.org](https://www.openandromaps.org). Each downloaded OpenAndroMaps map archive contains a map file (file extension _.map_). Mapsforge tile server will render this map file.  
 
-8. Mapsforge themes  
+8. **Mapsforge themes**  
 Mapsforge themes _Elevate_ and _Elements_ (file extension _.xml_) suitable for OpenAndroMaps are available for download at [openandromaps.org](https://www.openandromaps.org).  
-Note:  
-In order "Hillshading on map" to be applied to rendered map tiles, hillshading has to be enabled in theme file too. _Elevate_ and _Elements_ themes version 5 or higher do enable hillshading.
+**Note**:  
+In order "Hillshading on map" to be applied to rendered map tiles, hillshading has to be enabled in theme file too. _Elevate_ and _Elements_ themes version 5 or higher do enable hillshading.  
 
-9. DEM data (optional, required for hillshading)  
-Download and store DEM (Digital Elevation Model) data for the regions to be rendered.
-Notes:  
+9. **DEM data** (optional, required for hillshading)  
+Download and store DEM (Digital Elevation Model) data for the regions to be rendered.  
+**Notes**:  
 Either HGT files or ZIP archives containing 1 single equally named HGT file may be supplied.  
 Example: ZIP archive N49E008.zip containing 1 single HGT file N49E008.hgt.  
 While 1\" (arc second) resolution DEM data have a significantly higher accuracy than 3\" resolution, hillshading assumes significantly much more time. Therefore 3\" resolution usually is better choice.  
@@ -93,20 +97,18 @@ While 1\" (arc second) resolution DEM data have a significantly higher accuracy 
 \- HGT files with 1\" resolution DEM data are available for selected regions at [viewfinderpanoramas.org](http://www.viewfinderpanoramas.org/Coverage%20map%20viewfinderpanoramas_org1.htm). Unzip downloaded ZIP files to DEM folder.  
 \- ZIP archives with 3\" and 1\" resolution compiled and resampled by Sonny are available for selected regions at [Sonny's Digital LiDAR Terrain Models of European Countries](https://sonny.4lima.de). LiDAR data where available are more precise than SRTM data. Store downloaded ZIP files to DEM folder.
 
-10. Mapsforge-to-Tiles graphical user interface  
+10. **Mapsforge-to-Tiles graphical user interface**  
 Download language-neutral script file _Mapsforge-to-Tiles.tcl_, user settings file _Mapsforge-to-Tiles.ini_  and at least one localized resource file.  
-Windows: Copy downloaded files into Mapsforge tile server’s installation folder, e.g. into folder _%ProgramFiles%/MapsforgeSrv_.  
-Linux: Copy downloaded files into Mapsforge tile server’s installation folder, e.g. into folder _~/MapsforgeSrv_.  
-Edit _user-defined script variables settings section_ of user settings file _Mapsforge-to-Tiles.ini_ to match files and folders of your local installation of Java and Mapsforge tile server.  
-Important:  
-Always use slash character “/” as directory separator in _Mapsforge-to-Tiles.ini_ file, for Microsoft Windows too!
+**Windows**: Copy downloaded files into Mapsforge tile server’s installation folder, e.g. into folder _%ProgramFiles%/MapsforgeSrv_.  
+**Linux** / **macOS**: Copy downloaded files into Mapsforge tile server’s installation folder, e.g. into folder _~/MapsforgeSrv_.  
+**Note**: Edit _user-defined script variables settings section_ of user settings file _Mapsforge-to-Tiles.ini_ to match files and folders of your local installation of Java and Mapsforge tile server. Always use slash character “/” as directory separator in _Mapsforge-to-Tiles.ini_ file, for Microsoft Windows too!  
 
 ### Script file execution
 
-Windows:  
-Associate file extension _.tcl_ to Tcl/Tk window shell’s binary _wish.exe_. Right-click script file and open file’s properties window. Change data type _.tcl_ to get opened by _Wish application_ e.g. by executable _%ProgramFiles%/Tcl/bin/wish.exe_. Once file extension has been associated, double-click script file to run.
+**Windows**:  
+Associate file extension _.tcl_ to Tcl/Tk window shell’s binary _wish.exe_. Right-click script file and open file’s properties window. Change data type _.tcl_ to get opened by _Wish application_ e.g. by executable _%ProgramFiles%/Tcl/bin/wish.exe_. Once file extension has been associated, double-click script file to run.  
 
-Linux:  
+**Linux**:  
 Either run script file from command line by
 ```
 wish <path-to-script>/Mapsforge-to-Tiles.tcl
@@ -120,8 +122,17 @@ Terminal=false
 Name=Mapsforge-to-Tiles
 Exec=wish <path-to-script>/Mapsforge-to-Tiles.tcl
 ```
-or associate file extension _.tcl_ to Tcl/Tk window shell’s binary _/usr/bin/wish_ and run script file by double-click file in file manager.
+or associate file extension _.tcl_ to Tcl/Tk window shell’s binary _/usr/bin/wish_ and run script file by double-click file in file manager.  
 
+**macOS**:  
+Either run script file from command line by
+```
+wish <path-to-script>/Mapsforge-to-Tiles.tcl
+```
+
+or use _Automator -> Application -> Run Shell Script -> /usr/local/bin/wish \"$@\"_ to create an application for Tcl/Tk window shell’s binary _wish_, then associate all _.tcl_ files to this application and run script file by double-click file in file manager.
+
+Having _.tcl_ files associated to this application, a desktop starter from script file can be created by _Make Alias_ and dragging the alias and dropping it to desktop.  
                      
 ### Usage
 

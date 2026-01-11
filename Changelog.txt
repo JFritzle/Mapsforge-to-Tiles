@@ -1,3 +1,12 @@
+2026-01-11
+
+- Extended scripts for macOS operating system:
+  Moved console into main thread (macOS GUI requirement!),
+  moved Mapsforge server completely into own thread
+  Extended operating system dependent code to include macOS
+  Extended README to include macOS
+- Redesigned communication between thread and console
+
 2025-12-27
 
 - Fixed script aborting on missing overlay layer in xml theme file
