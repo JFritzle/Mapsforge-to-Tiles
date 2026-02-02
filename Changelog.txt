@@ -1,3 +1,9 @@
+2026-02-02
+
+- Fixed output console issues with macOS operating system:
+  o horizontal scroll bar may be missing
+  o duplicate title bar due to reserved name ".console"
+
 2026-01-11
 
 - Extended scripts for macOS operating system:
