@@ -25,7 +25,7 @@ if {[encoding system] != "utf-8"} {
 package require Tk
 wm withdraw .
 
-set version "2026-02-17"
+set version "2026-03-03"
 set script [file normalize [info script]]
 set title [file tail $script]
 
@@ -216,6 +216,49 @@ image create bitmap ArrowDown -data {
   static char x_bits[] = {
   0x00,0xfe,0x00,0xfe,0xff,0xff,0xfe,0xfe,0x7c,0xfe,0x38,0xfe,0x10,0xfe
   };
+}
+
+# Recursively find children
+
+proc find_children {widget} {
+  set list [winfo children $widget]
+  foreach item $list {lappend list {*}[find_children $item]}
+  return $list
+}
+
+# Set "tk busy" state
+
+if {$tcl_platform(os) != "Darwin"} {
+  # Use built-in "tk busy" where applicable
+  interp alias {} ::tk_busy {} ::tk busy
+} else {
+  # Emulate "tk busy" where required
+  proc tk_busy {state widget args} {
+    set classes {TButton TCheckbutton TRadiobutton TCombobox \
+		 Entry Scale Listbox}
+    lappend list $widget {*}[find_children $widget]
+    global $widget.busy
+    switch $state {
+      "hold" {
+	array set $widget.busy {}
+	foreach item $list {
+	  if {[winfo class $item] in $classes} {
+	    set $widget.busy($item) [$item cget -state]
+	    $item configure -state disabled
+	  }
+	}
+      }
+      "forget" {
+	foreach item $list {
+	  if {[winfo class $item] in $classes} {
+	    set val [set $widget.busy($item)]
+	    $item configure -state $val
+	  }
+	}
+	array unset $widget.busy
+      }
+    }
+  }
 }
 
 # Try using system locale for script
@@ -1223,15 +1266,15 @@ focus .buttons.continue
 proc busy_state {state} {
   set busy {.l .r .buttons.continue .overlays .shading .effects .server}
   if {$state} {
-    foreach item $busy {tk busy hold $item}
+    foreach item $busy {tk_busy hold $item -cursor wait}
     .buttons.continue state pressed
     .buttons.cancel configure -text [mc b03] -command cancel_render_job
   } else {
     .buttons.continue state !pressed
     .buttons.cancel configure -text [mc b02] -command {set action 0}
-    foreach item $busy {tk busy forget $item}
+    foreach item $busy {tk_busy forget $item}
   }
-  update idletasks
+  update
 }
 
 # Show/hide output console window (show with saved geometry)
