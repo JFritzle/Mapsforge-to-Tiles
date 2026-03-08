@@ -1,3 +1,7 @@
+2026-03-08
+
+- Fixed script crashing on Linux
+
 2026-03-03
 
 - Emulate "tk busy" on macOS 

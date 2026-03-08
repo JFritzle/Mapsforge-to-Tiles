@@ -25,7 +25,7 @@ if {[encoding system] != "utf-8"} {
 package require Tk
 wm withdraw .
 
-set version "2026-03-03"
+set version "2026-03-08"
 set script [file normalize [info script]]
 set title [file tail $script]
 
@@ -1266,7 +1266,7 @@ focus .buttons.continue
 proc busy_state {state} {
   set busy {.l .r .buttons.continue .overlays .shading .effects .server}
   if {$state} {
-    foreach item $busy {tk_busy hold $item -cursor wait}
+    foreach item $busy {tk_busy hold $item}
     .buttons.continue state pressed
     .buttons.cancel configure -text [mc b03] -command cancel_render_job
   } else {
