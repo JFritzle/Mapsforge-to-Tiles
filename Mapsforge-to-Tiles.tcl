@@ -25,7 +25,7 @@ if {[encoding system] != "utf-8"} {
 package require Tk
 wm withdraw .
 
-set version "2026-04-22"
+set version "2026-05-04"
 set script [file normalize [info script]]
 set title [file tail $script]
 
@@ -829,7 +829,7 @@ set themes [linsert $themes 0 (DEFAULT)]
 font create title_font {*}[font configure TkDefaultFont] \
 	-underline 1 -weight bold
 label .title -text $title -font title_font -fg blue
-pack .title -expand 1 -fill x -pady {0 3}
+pack .title -fill x -pady {0 3}
 
 set github https://github.com/JFritzle/Mapsforge-to-Tiles
 tooltip .title $github
@@ -850,7 +850,7 @@ pack .l -side left -anchor nw
 if {$language == ""} {set language $locale}
 if {![info exists maps.language]} {set maps.language $language}
 labelframe .lang -labelanchor w -text [mc l11]:
-pack .lang -in .l -expand 1 -fill x -pady 1
+pack .lang -in .l -fill x -pady 1
 entry .lang.value -textvariable maps.language -width 4 -justify center
 pack .lang.value -side right
 foreach item {.lang .lang.value} {tooltip $item [mc l11t]}
@@ -864,20 +864,20 @@ foreach item {.lang .lang.value} {tooltip $item [mc l11t]}
 
 # Mapsforge map selection
 
-labelframe .maps_folder -labelanchor nw -text [mc l13]:
-pack .maps_folder -in .l -expand 1 -fill x -pady 1
+labelframe .maps_folder -text [mc l13]:
+pack .maps_folder -in .l -fill x -pady 1
 entry .maps_folder.value -textvariable maps_folder \
 	-state readonly -takefocus 0 -highlightthickness 0
-pack .maps_folder.value -expand 1 -fill x
+pack .maps_folder.value -fill x
 
-labelframe .maps -labelanchor nw -text [mc l14]:
-pack .maps -in .l -expand 1 -fill x -pady 1
+labelframe .maps -text [mc l14]:
+pack .maps -in .l -fill x -pady 1
 scrollbar .maps.scroll -command ".maps.values yview"
 listbox .maps.values -selectmode extended -activestyle none \
 	-width 0 -height [expr min([llength $maps],8)] \
 	-yscrollcommand ".maps.scroll set"
 pack .maps.scroll -side right -fill y
-pack .maps.values -side left -expand 1 -fill both
+pack .maps.values -side left -fill both -expand 1
 tooltip .maps.values [mc l14t]
 
 foreach map $maps {
@@ -895,59 +895,59 @@ bind .maps.values <<ListboxSelect>> {
 # Append Mapsforge world map
 
 checkbutton .maps_world -text [mc l15] -variable maps.world
-pack .maps_world -in .l -expand 1 -fill x
+pack .maps_world -in .l -fill x
 
 # Mapsforge theme selection
 
-labelframe .themes_folder -labelanchor nw -text [mc l16]:
-pack .themes_folder -in .l -expand 1 -fill x -pady 1
+labelframe .themes_folder -text [mc l16]:
+pack .themes_folder -in .l -fill x -pady 1
 entry .themes_folder.value -textvariable themes_folder \
 	-state readonly -takefocus 0 -highlightthickness 0
-pack .themes_folder.value -expand 1 -fill x
+pack .themes_folder.value -fill x
 
 set width 0
 foreach item $themes \
 	{set width [expr max([font measure TkTextFont $item],$width)]}
 set width [expr $width/[font measure TkTextFont "0"]+1]
 
-labelframe .themes -labelanchor nw -text [mc l17]:
-pack .themes -in .l -expand 1 -fill x -pady 1
+labelframe .themes -text [mc l17]:
+pack .themes -in .l -fill x -pady 1
 combobox .themes.values -width $width \
 	-validate key -validatecommand {return 0} \
 	-textvariable theme.selection -values $themes
 if {[.themes.values current] < 0} {.themes.values current 0}
-pack .themes.values -expand 1 -fill x
+pack .themes.values -fill x
 
 # Mapsforge theme style selection
 
-labelframe .styles -labelanchor nw -text [mc l18]:
+labelframe .styles -text [mc l18]:
 combobox .styles.values -validate key -validatecommand {return 0}
-pack .styles.values -expand 1 -fill x
+pack .styles.values -fill x
 bind .styles.values <<ComboboxSelected>> update_overlays_selection
 
 # Mapsforge theme overlays selection
 
 checkbutton .overlays_show_hide -text [mc c01] \
 	-command "show_hide_toplevel_window .overlays"
-pack .overlays_show_hide -in .styles -expand 1 -fill x -pady {2 0}
+pack .overlays_show_hide -in .styles -fill x -pady {2 0}
 
 # Show hillshading options
 
 checkbutton .shading_show_hide -text [mc c02] \
 	-command "show_hide_toplevel_window .shading"
-pack .shading_show_hide -in .l -expand 1 -fill x
+pack .shading_show_hide -in .l -fill x
 
 # Show visual rendering effects options
 
 checkbutton .effects_show_hide -text [mc c03] \
 	-command "show_hide_toplevel_window .effects"
-pack .effects_show_hide -in .l -expand 1 -fill x
+pack .effects_show_hide -in .l -fill x
 
 # Show server settings
 
 checkbutton .server_show_hide -text [mc c04] \
 	-command "show_hide_toplevel_window .server"
-pack .server_show_hide -in .l -expand 1 -fill x
+pack .server_show_hide -in .l -fill x
 
 # Filler down to bottom left
 
@@ -971,12 +971,12 @@ pack .r -anchor nw
 # X and Y range
 
 labelframe .xyrange -labelanchor w -text [mc l21]:
-pack .xyrange -in .r -expand 1 -fill x -pady 1
+pack .xyrange -in .r -fill x -pady 1
 combobox .xyrange.values -width 24 -values [list [mc v22] [mc v23]] \
 	-validate key -validatecommand {return 0}
 if {[info exists xyrange.mode]} {.xyrange.values current ${::xyrange.mode}}
 if {[.xyrange.values current] < 0} {.xyrange.values current 0}
-pack .xyrange.values -side right -anchor e -expand 1
+pack .xyrange.values -side right
 
 proc switch_xyrange {} {
   set range [.xyrange.values current]
@@ -995,12 +995,12 @@ proc switch_xyrange {} {
 
 # Tiles
 
-labelframe .tiles -labelanchor nw -text [mc l22]:
+labelframe .tiles -text [mc l22]:
 pack .tiles -in .r -fill x
 
 # Coordinates
 
-labelframe .coord -labelanchor nw -text [mc l23]:
+labelframe .coord -text [mc l23]:
 pack .coord -in .r -fill x
 
 # Common widgets for tiles/coordinates
@@ -1030,13 +1030,13 @@ foreach item {tiles coord} {
 # Zoom level
 
 labelframe .zoom -labelanchor w -text [mc l24]:
-pack .zoom -in .r -fill x -expand 1 -pady 1
+pack .zoom -in .r -fill x -pady 1
 scale .zoom.scale -from $min_zoom_level -to $max_zoom_level -resolution 1 \
 	-orient horizontal -variable zoom.level -command scale_zoom
-label .zoom.value -anchor center -textvariable zoom.level -width 4 \
+label .zoom.value -textvariable zoom.level -width 4 \
 	-relief sunken
 pack .zoom.value -side right
-pack .zoom.scale -side left -fill x -expand 1
+pack .zoom.scale -side left -fill x -expand 1 -padx {3 0}
 
 proc scale_zoom {zoom} {
   set tmax [expr (1<<$zoom)-1]
@@ -1178,8 +1178,8 @@ scale_zoom ${zoom.level}
 # Choose folder for tiles and composed image
 
 if {![file isdirectory ${tiles.folder}]} {set tiles.folder $cwd}
-labelframe .tiles_folder -labelanchor nw -text [mc l31]:
-pack .tiles_folder -in .r -fill x -expand 1 -pady 1
+labelframe .tiles_folder -text [mc l31]:
+pack .tiles_folder -in .r -fill x -pady 1
 entry .tiles_folder.value -textvariable tiles.folder \
 	-state readonly -takefocus 0 -highlightthickness 0
 button .tiles_folder.button -style Arrow.TButton \
@@ -1199,7 +1199,7 @@ proc choose_tiles_folder {} {
 # Filename prefix
 
 labelframe .tiles_prefix -labelanchor w -text [mc l33]:
-pack .tiles_prefix -in .r -expand 1 -fill x -pady {2 1}
+pack .tiles_prefix -in .r -fill x -pady {2 1}
 entry .tiles_prefix.value -textvariable tiles.prefix -width 25 -justify left
 pack .tiles_prefix.value -side right
 
@@ -1214,7 +1214,7 @@ radiobutton .use_gmagick -text [mc c32 GraphicsMagick] \
 	-variable use.magick -value gm
 radiobutton .use_imagick -text [mc c32 ImageMagick] \
 	-variable use.magick -value magick
-pack .use_gmagick .use_imagick -in .r -expand 1 -fill x
+pack .use_gmagick .use_imagick -in .r -fill x
 
 if {$gm == ""} {
   set use.magick magick
@@ -1231,7 +1231,7 @@ if {$magick == ""} {
 
 checkbutton .tiles_compose -text [mc c33] \
 	-variable tiles.compose -command tiles_compose_onoff
-pack .tiles_compose -in .r -expand 1 -fill x
+pack .tiles_compose -in .r -fill x
 
 # Container for "Compose tiles" dependent widgets
 
@@ -1249,12 +1249,12 @@ tiles_compose_onoff
 # Keep tiles after composing to image
 
 checkbutton .tiles_keep -text [mc c34] -variable tiles.keep
-pack .tiles_keep -in .tiles_compose_onoff -expand 1 -fill x
+pack .tiles_keep -in .tiles_compose_onoff -fill x
 
 # Show composed image
 
 checkbutton .show_composed -text [mc c35] -variable composed.show
-pack .show_composed -in .tiles_compose_onoff -expand 1 -fill x
+pack .show_composed -in .tiles_compose_onoff -fill x
 
 # Action buttons
 
@@ -1284,7 +1284,7 @@ proc busy_state {state} {
 
 checkbutton .output -text [mc c99] \
 	-variable console.show -command {console_show_hide ${console.show}}
-pack .output -expand 1 -fill x
+pack .output -fill x
 console_show_hide ${console.show}
 
 wm protocol .konsole WM_DELETE_WINDOW {.output invoke}
@@ -1357,7 +1357,7 @@ proc position_toplevel_window {widget} {
   } elseif {[tk windowingsystem] == "x11"} {
     set bdwidth 2
     if {[auto_execok xwininfo] == ""} {
-      cputw "Please install program 'xwininfo' by Linux package manager"
+      cputw "Please install program 'xwininfo' by package manager"
       cputw "to evaluate exact window border width."
     } elseif {![catch {exec bash -c "export LANG=C;xwininfo -id [wm frame .] \
 	| grep Width | cut -d: -f2"} wmwidth]} {
@@ -1398,7 +1398,7 @@ foreach widget {. .overlays .shading .effects .server} {
 # Enable/disable hillshading
 
 checkbutton .shading.onoff -text [mc c80] -variable shading.onoff
-pack .shading.onoff -expand 1 -fill x
+pack .shading.onoff -fill x
 
 # Hillshading on map or as separate transparent overlay map
 
@@ -1407,15 +1407,15 @@ radiobutton .shading.onmap -text [mc c81] -state disabled \
 tooltip .shading.onmap [mc c81t]
 radiobutton .shading.asmap -text [mc c82] \
 	-variable shading.layer -value asmap
-pack .shading.onmap .shading.asmap -anchor w -fill x
+pack .shading.onmap .shading.asmap -fill x
 
 # Choose DEM folder with HGT files
 
 if {![file isdirectory ${dem.folder}]} {set dem.folder ""}
 
-labelframe .shading.dem_folder -labelanchor nw -text [mc l81]:
+labelframe .shading.dem_folder -text [mc l81]:
 tooltip .shading.dem_folder [mc l81t]
-pack .shading.dem_folder -fill x -expand 1 -pady 1
+pack .shading.dem_folder -fill x -pady 1
 entry .shading.dem_folder.value -textvariable dem.folder \
 	-state readonly -takefocus 0 -highlightthickness 0
 tooltip .shading.dem_folder.value [mc l81t]
@@ -1433,7 +1433,7 @@ proc choose_dem_folder {} {
 # Hillshading algorithm
 
 labelframe .shading.algorithm -labelanchor w -text [mc l83]:
-pack .shading.algorithm -expand 1 -fill x -pady 2
+pack .shading.algorithm -fill x -pady 2
 set list {stdasy simplasy hiresasy}
 if {$server_version >= 230001} {lappend list adaptasy}
 lappend list simple diffuselight
@@ -1442,7 +1442,7 @@ combobox .shading.algorithm.values -width 12 \
 	-textvariable shading.algorithm -values $list
 if {[.shading.algorithm.values current] < 0} \
 	{.shading.algorithm.values current 0}
-pack .shading.algorithm.values -side right -anchor e -expand 1
+pack .shading.algorithm.values -side right
 
 # Hillshading algorithm parameters
 
@@ -1457,14 +1457,14 @@ entry .shading.simple.value2 -textvariable shading.simple.scale \
 set .shading.simple.value2.minmax {0 10 0.666}
 tooltip .shading.simple.value2 "0 ≤ [mc l85] ≤ 10"
 pack .shading.simple.value1 .shading.simple.label2 .shading.simple.value2 \
-	-side left -anchor w -expand 1 -fill x -padx {5 0}
+	-side left -anchor w -expand 1 -fill x -padx {3 0}
 
 labelframe .shading.diffuselight -labelanchor w -text [mc l86]:
 entry .shading.diffuselight.value -textvariable shading.diffuselight.angle \
 	-width 8 -justify right
 set .shading.diffuselight.value.minmax {0 90 50.}
 tooltip .shading.diffuselight.value "0° ≤ [mc l86] ≤ 90°"
-pack .shading.diffuselight.value -side right -anchor e -expand 1
+pack .shading.diffuselight.value -side right -padx {3 0}
 
 frame .shading.asy
 foreach i {0 1 2} {
@@ -1488,12 +1488,12 @@ grid columnconfigure .shading.asy 1 -weight 1
 # Hillshading magnitude
 
 labelframe .shading.magnitude -labelanchor w -text [mc l87]:
-pack .shading.magnitude -expand 1 -fill x
+pack .shading.magnitude -fill x
 entry .shading.magnitude.value -textvariable shading.magnitude \
 	-width 8 -justify right
 set .shading.magnitude.value.minmax {0 4 1.}
 tooltip .shading.magnitude.value "0 ≤ [mc l87] ≤ 4"
-pack .shading.magnitude.value -anchor e -expand 1
+pack .shading.magnitude.value -side right -padx {3 0}
 
 # Theme's hillshading zoom
 
@@ -1520,7 +1520,7 @@ foreach item {min max} {
   grid .shading.zoom.${item}_value -row $row -column 2 -sticky we
 }
 grid columnconfigure .shading.zoom 1 -weight 1
-if {$server_version >= 230002} {pack .shading.zoom -expand 1 -fill x}
+if {$server_version >= 230002} {pack .shading.zoom -fill x}
 
 # Reset hillshading values
 
@@ -1541,7 +1541,7 @@ proc update_shading_window {} {
 	{.shading.algorithm.values current 0}
   set widget ${::shading.algorithm}
   regsub {.*asy$} $widget {asy} widget
-  pack .shading.$widget -after .shading.algorithm -expand 1 -fill x -pady 1
+  pack .shading.$widget -after .shading.algorithm -fill x -pady 1
   update_shading_zoom_levels
   resize_toplevel_window .shading
 }
@@ -1602,28 +1602,28 @@ scale .effects.user_scale -from 0.05 -to 2.50 -resolution 0.05 \
 	-orient horizontal -variable user.scale
 bind .effects.user_scale <Shift-ButtonRelease-1> "set user.scale 1.00"
 label .effects.user_value -textvariable user.scale -width 4 \
-	-relief sunken -anchor center
+	-relief sunken
 
 label .effects.text_label -text [mc s03]: -anchor w
 scale .effects.text_scale -from 0.05 -to 2.50 -resolution 0.05 \
 	-orient horizontal -variable text.scale
 bind .effects.text_scale <Shift-ButtonRelease-1> "set text.scale 1.00"
 label .effects.text_value -textvariable text.scale -width 4 \
-	-relief sunken -anchor center
+	-relief sunken
 
 label .effects.symbol_label -text [mc s04]: -anchor w
 scale .effects.symbol_scale -from 0.05 -to 2.50 -resolution 0.05 \
 	-orient horizontal -variable symbol.scale
 bind .effects.symbol_scale <Shift-ButtonRelease-1> "set symbol.scale 1.00"
 label .effects.symbol_value -textvariable symbol.scale -width 4 \
-	-relief sunken -anchor center
+	-relief sunken
 
 label .effects.line_label -text [mc s05]: -anchor w
 scale .effects.line_scale -from 0.05 -to 2.50 -resolution 0.05 \
 	-orient horizontal -variable line.scale
 bind .effects.line_scale <Shift-ButtonRelease-1> "set line.scale 1.00"
 label .effects.line_value -textvariable line.scale -width 4 \
-	-relief sunken -anchor center
+	-relief sunken
 
 set row 0
 grid .effects.scaling -row $row -column 1 -columnspan 3 -sticky we
@@ -1644,14 +1644,14 @@ scale .effects.gamma_scale -from 0.01 -to 4.99 -resolution 0.01 \
 	-orient horizontal -variable maps.gamma
 bind .effects.gamma_scale <Shift-ButtonRelease-1> "set maps.gamma 1.00"
 label .effects.gamma_value -textvariable maps.gamma -width 4 \
-	-relief sunken -anchor center
+	-relief sunken
 
 label .effects.contrast_label -text [mc s08]: -anchor w
 scale .effects.contrast_scale -from 0 -to 254 -resolution 1 \
 	-orient horizontal -variable maps.contrast
 bind .effects.contrast_scale <Shift-ButtonRelease-1> "set maps.contrast 0"
 label .effects.contrast_value -textvariable maps.contrast -width 4 \
-	-relief sunken -anchor center
+	-relief sunken
 
 set row 10
 grid .effects.color -row $row -column 1 -columnspan 3 -sticky we
@@ -1688,24 +1688,24 @@ pack .server.info
 # Java runtime version
 
 labelframe .server.jre_version -labelanchor w -text [mc x02]:
-pack .server.jre_version -expand 1 -fill x -pady 1
-label .server.jre_version.value -anchor e -textvariable java_string
-pack .server.jre_version.value -side right -anchor e -expand 1
+pack .server.jre_version -fill x -pady 1
+label .server.jre_version.value -textvariable java_string
+pack .server.jre_version.value -side right
 
 # Mapsforge server version
 
 labelframe .server.version -labelanchor w -text [mc x03]:
-pack .server.version -expand 1 -fill x -pady 1
-label .server.version.value -anchor e -textvariable server_string
-pack .server.version.value -side right -anchor e -expand 1
+pack .server.version -fill x -pady 1
+label .server.version.value -textvariable server_string
+pack .server.version.value -side right
 
 # Mapsforge server version jar archive
 
-labelframe .server.jar -labelanchor nw -text [mc x04]:
-pack .server.jar -expand 1 -fill x -pady 1
+labelframe .server.jar -text [mc x04]:
+pack .server.jar -fill x -pady 1
 entry .server.jar.value -textvariable server_jar \
 	-state readonly -takefocus 0 -highlightthickness 0
-pack .server.jar.value -expand 1 -fill x
+pack .server.jar.value -fill x
 
 # Server configuration
 
@@ -1730,15 +1730,15 @@ foreach item $engines \
 	{set width [expr max([font measure TkTextFont $item],$width)]}
 set width [expr $width/[font measure TkTextFont "0"]+1]
 
-labelframe .server.engine -labelanchor nw -text [mc x12]:
+labelframe .server.engine -text [mc x12]:
 combobox .server.engine.values -width $width \
 	-validate key -validatecommand {return 0} \
 	-textvariable rendering.engine -values $engines
 if {[.server.engine.values current] < 0} \
 	{.server.engine.values current 0}
 if {[llength $engines] > 1} {
-  pack .server.engine -expand 1 -fill x -pady 1
-  pack .server.engine.values -anchor e -expand 1 -fill x
+  pack .server.engine -fill x -pady 1
+  pack .server.engine.values -fill x
 }
 
 # Server interface
@@ -1748,8 +1748,8 @@ combobox .server.interface.values -width 10 \
 	-textvariable tcp.interface -values {localhost all}
 if {[.server.interface.values current] < 0} \
 	{.server.interface.values current 0}
-pack .server.interface -expand 1 -fill x -pady {6 2}
-pack .server.interface.values -side right -anchor e -expand 1 -padx {3 0}
+pack .server.interface -fill x -pady {4 2}
+pack .server.interface.values -side right -padx {3 0}
 
 # Server TCP port number
 
@@ -1758,8 +1758,8 @@ entry .server.port.value -textvariable tcp.port \
 	-width 6 -justify center
 set .server.port.value.minmax "1024 65535 $tcp_port"
 tooltip .server.port.value "1024 ≤ [mc x15] ≤ 65535"
-pack .server.port -expand 1 -fill x -pady 1
-pack .server.port.value -side right -anchor e -expand 1 -padx {3 0}
+pack .server.port -fill x -pady 1
+pack .server.port.value -side right -padx {3 0}
 
 # Maximum size of TCP listening queue
 
@@ -1768,13 +1768,13 @@ entry .server.maxconn.value -textvariable tcp.maxconn \
 	-width 6 -justify center
 set .server.maxconn.value.minmax {0 {} 1024}
 tooltip .server.maxconn.value "[mc x16] ≥ 0"
-pack .server.maxconn -expand 1 -fill x -pady 1
-pack .server.maxconn.value -side right -anchor e -expand 1 -padx {3 0}
+pack .server.maxconn -fill x -pady 1
+pack .server.maxconn.value -side right -padx {3 0}
 
 # Enable/disable server request logging
 
 checkbutton .server.logrequests -text [mc x19] -variable log.requests
-pack .server.logrequests -expand 1 -fill x
+pack .server.logrequests -fill x
 
 # Reset server configuration
 
@@ -2020,7 +2020,7 @@ proc update_theme_styles_overlays {} {
 	[lsearch -exact -index 0 ${::style.table} $defaultstyle]
 
   # Show style selection
-  pack configure .styles -in .l -after .themes -expand 1 -fill x -pady 1
+  pack configure .styles -in .l -after .themes -fill x -pady 1
   resize_toplevel_window .
 }
 
@@ -2035,7 +2035,7 @@ proc update_overlays_selection {} {
   frame $parent
   label $parent.label -text [lindex $style 1]
   frame $parent.separator1 -bd 2 -height 2 -relief sunken
-  pack $parent.label $parent.separator1 -expand 1 -fill x -pady {0 2}
+  pack $parent.label $parent.separator1 -fill x -pady {0 2}
   set overlays [lindex $style 2]
   foreach overlay $overlays {
     set overlay_id [lindex $overlay 0]
@@ -2045,12 +2045,12 @@ proc update_overlays_selection {} {
     checkbutton $child -text [lindex $overlay 1] -padding 0 \
 	-variable $variable -onvalue true -offvalue false \
 	-command "update_style_overlay $style_id $overlay_id"
-    pack $child -expand 1 -fill x
+    pack $child -fill x
   }
   frame $parent.separator2 -bd 2 -height 2 -relief sunken
-  pack $parent.separator2 -expand 1 -fill x -pady 2
+  pack $parent.separator2 -fill x -pady 2
   frame $parent.buttons
-  pack $parent.buttons -anchor n -expand 1
+  pack $parent.buttons -anchor n
   button $parent.buttons.all -text [mc b91] -width 8 \
 	-command "select_style_overlays $style_id all"
   tooltip $parent.buttons.all [mc b91t]
@@ -2135,7 +2135,7 @@ proc save_theme_settings {} {
     set overlays [lindex $style 2]
     foreach overlay $overlays {
       set overlay_id [lindex $overlay 0]
-      puts $fd "$style_id.$overlay_id=[lindex $overlay 2]"
+      puts $fd $style_id.$overlay_id=[lindex $overlay 2]
     }
   }
   close $fd
@@ -2342,11 +2342,13 @@ proc process_kill {process} {
 
   thread::send $tid {proc fevent {} [regsub m52 [info body fevent] m53]}
 
-  if {$::tcl_platform(os) == "Windows NT"} {
-    catch {exec TASKKILL /F /PID $pid /T}
-  } elseif {$::tcl_platform(os) == "Linux" || $::tcl_platform(os) == "Darwin"} {
-    if {[catch {exec pgrep -d " " -P $pid} list]} {set list {}}
-    catch {exec kill -SIGKILL $pid {*}$list}
+  switch $::tcl_platform(os) {
+    "Windows NT" {catch {exec TASKKILL /F /PID $pid /T}}
+    "Linux" -
+    "Darwin" {
+      if {[catch {exec pgrep -d " " -P $pid} list]} {set list {}}
+      catch {exec kill -SIGKILL $pid {*}$list}
+    }
   }
 
   if {![info exist ::$process.eof]} {
@@ -2382,7 +2384,7 @@ proc srv_start {} {
 # lappend params -Xloggc:$::cwd/gc.$now.log -XX:+PrintGCDetails
   lappend params -Dslf4j.internal.verbosity=WARN
 # lappend params -Dlog4j.debug
-  lappend params -Dlog4j.configuration=file:"$::tmpdir/log4j.properties"
+  lappend params -Dlog4j.configuration=$::log4j
 
   lappend params -Dsun.java2d.opengl=true
 # lappend params -Dsun.java2d.d3d=true
@@ -3108,7 +3110,8 @@ while {1} {
 
 # Create server logging properties
 
-set fd [open $tmpdir/log4j.properties w]
+set file $tmpdir/log4j.properties
+set fd [open $file w]
 puts $fd "log4j.rootLogger=INFO, stdout"
 puts $fd "log4j.appender.stdout.encoding=UTF-8"
 puts $fd "log4j.appender.stdout=org.apache.log4j.ConsoleAppender"
@@ -3116,6 +3119,7 @@ puts $fd "log4j.appender.stdout.Target=System.out"
 puts $fd "log4j.appender.stdout.layout=org.apache.log4j.PatternLayout"
 puts $fd "log4j.appender.stdout.layout.ConversionPattern=%d{yyyy-MM-dd HH:mm:ss.SSS} %m%n"
 close $fd
+set log4j "file:[string range [::http::formatQuery {} $file] 1 end]"
 
 # Create server's temporary files folder
 
