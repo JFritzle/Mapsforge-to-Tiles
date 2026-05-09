@@ -1,3 +1,8 @@
+2026-05-09
+
+- Added hyperlink to Mapsforge Server's home page
+- Minor script optimizations
+
 2026-05-04
 
 - Fixed log4j server issue with non-ASCII characters in user name
